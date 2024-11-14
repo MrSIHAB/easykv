@@ -2,6 +2,7 @@
   "name": "@easykv/easykv",
   "version": "0.1.0",
   "exports": "./mod.ts",
+  "license": "MIT",
   "tasks": {
     "dev": "deno run --watch main.ts"
   },

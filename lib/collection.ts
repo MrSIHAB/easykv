@@ -5,8 +5,8 @@ abstract class CollectionMap {
     constructor(public collection: string) {
     }
 
-    public async findById(id: Deno.KvKeyPart) {
-        return (await kv.get([this.collection, id])).value;
+    public async findById(id: Deno.KvKeyPart): Promise<Model | null> {
+        return (await kv.get([this.collection, id])).value as Model;
     }
 
     abstract save(data: Record<string, unknown>): Promise<object>;

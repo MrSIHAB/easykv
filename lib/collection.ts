@@ -15,16 +15,16 @@ abstract class CollectionMap {
     ): Promise<Model[]>;
 
     //todo: More options to be include
-    // todo: Update Data
+    // todo: Update One
     // todo: Update Many
+    // todo: is Exist
+    // todo: is Unique
     // todo: Delete Data
     // todo: Delete Entry
     // todo: Delete Collection
     // todo: Delete Many
     // todo: on event
     // todo: watch
-    // todo: is Exist
-    // todo: is Unique
 }
 
 export class Collection extends CollectionMap {

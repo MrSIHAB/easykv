@@ -39,7 +39,7 @@ import * as easykv from "jsr:@easykv/easykv";
 
 # Use methods
 
-- Firstly, make a collection :
+### Firstly, make a collection :
 
 ```typescript
 import { Collecion } from "@easykv/easykv";
@@ -51,11 +51,11 @@ const User = new Collection("user");
 const Product = new Collection("product");
 ```
 
-Defination: DenoKV supports multiple keys. We use first key as collection. Here,
-use passed `user` string in parameter. This will make a new collection to
-database as user.
+<span style="color: #00ffd0; font-weight: bold">Defination :</span> DenoKV
+supports multiple keys. We use first key as collection. Here, use passed `user`
+string in parameter. This will make a new collection to database as user.
 
-- save some data to database.
+### save some data to database.
 
 ```typescript
 import { Collecion } from "@easykv/easykv";
@@ -68,9 +68,74 @@ const data = {
     name: "MrSIHAB",
     age: 19,
     country: "Bangladesh",
+    dn: "Dark-Ness",
 };
 
 const result = await User.save(data);
 
-console.log(result.ok);
+console.log(result.ok); // boolean
+console.log(result.versionstamp);
+console.log(result.data); // The saved data
 ```
+
+<span style="color: #00ffd0; font-weight: bold">Defination :</span> Save data as
+`object{}`. We made a object of data. To save the data, we used
+`collection.save()` function and passed the data as object. This function
+returns `Promise<object>`. Basically the returned object contains three data:
+`ok`, `versionstamp`, `data`. Ok is a boolean value tells if the process was
+succesfull. And `data` will provide the same data from database if was
+successfully saved. You can pass a `_id` into the data. If you don't, EasyKv
+will autometically generate one. Be carefull to pass `_id`. It sould always be
+unique. If you try to save more data with same `_id`, it will throw an error.
+
+### Get data from Database
+
+```typescript
+const User = new Collection("user");
+
+// get data by findById function
+const data = await User.findById(id);
+
+// if you pass id to this function, it will return that data to you.
+
+console.log(data.name);
+console.log(data.age);
+console.log(data.country);
+console.log(data.dn);
+```
+
+<span style="color: #00ffd0; font-weight: bold">Defination :</span> Pass a id to
+`collection.findById(_id)` to get that data. Remember `_id` always acts like an
+identifyer.
+
+<div align="center">
+
+### Search or filter data
+
+</div>
+
+```typescript
+// importing the User collection which we have made.
+import { User } from "./path/user.ts"; // Collection
+
+const filter = {
+    name: "Shruti Munde",
+    age: 20,
+};
+
+const filterData: [] = await User.findMany(filter);
+// note: findMany will return a [array] of {object => data}
+
+console.log(filterData[index]);
+// as filterData is a array, index must be a number
+```
+
+<span style="color: #00ffd0; font-weight: bold">Defination :</span>
+`collection.findMany({options})` let's you find a fillted array of data. Leave
+an empty object`{}` to get all available data of that collection. For example:
+
+```ts
+const allData = await collection.findMany({});
+```
+
+More Options are about launch...

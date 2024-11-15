@@ -17,3 +17,11 @@ Deno.test(async function setCollection() {
     name: "shruti munde",
   });
 });
+
+// get value
+Deno.test(async function getCollectin() {
+  assertEquals(
+    (await collection.findMany({ name: "shruti munde" }))[0].name,
+    "shruti munde",
+  );
+});

@@ -1,6 +1,13 @@
 import { kv } from "../mod.ts";
+import { saveData } from "./saveData.ts";
 import type { FilterCriteria, Model } from "./types/index.ts";
 
+/**
+ * Making a bluprint of Collection Class.
+ * This is an `abstract class`. So it can't be called.
+ * There are some simple function includeed in this class to do small task. Those function
+ * can be `ovveride` later.
+ */
 abstract class CollectionMap {
     constructor(public collection: string) {
     }
@@ -27,6 +34,22 @@ abstract class CollectionMap {
     // todo: watch
 }
 
+/**
+ * Example:
+ *
+ * ```typescript
+ * const collectionName = new Collection("collection-name")
+ * ```
+ *
+ * Deno KV
+ * supports hierarchical keys, and EasyKV uses the first key as the collection
+ * name. For instance, the string `"user"` passed in the parameter creates a
+ * collection called `user` in the database. This acts as the base namespace for
+ * all keys stored under this collection. Collections in EasyKV act like models in
+ * traditional ORMs (e.g., Mongoose). They group related data under a common
+ * namespace, enabling you to manage users, products, or other entities in an
+ * organized way.
+ */
 export class Collection extends CollectionMap {
     constructor(collection: string) {
         super(collection);
@@ -52,49 +75,51 @@ export class Collection extends CollectionMap {
      * ```
      */
     // deno-lint-ignore no-explicit-any
-    async save(data: Record<string, any>): Promise<Record<string, any>> {
-        /**
-         * If `_id` exist in given object, validating existing datas.
-         * So that two same id don't collaps
-         */
-        if (data._id) {
-            const existingData = await kv.get([this.collection, data._id]);
-            if (existingData.value) {
-                /**
-                 * if data with same _id exist, Throwing an error.
-                 * Package user will handle it.
-                 */
-                throw new Error(
-                    ` 
-                    Cannot save data with this ${data._id}
-                    Some data with this id: "${data._id}" already exist in database.
-                    `,
-                );
-            }
-        }
-        // if _id don't collaps ........
+    save = async (data: Record<string, any>): Promise<Record<string, any>> =>
+        await saveData(data, this.collection);
+    // {
+    //     /**
+    //      * If `_id` exist in given object, validating existing datas.
+    //      * So that two same id don't collaps
+    //      */
+    //     if (data._id) {
+    //         const existingData = await kv.get([this.collection, data._id]);
+    //         if (existingData.value) {
+    //             /**
+    //              * if data with same _id exist, Throwing an error.
+    //              * Package user will handle it.
+    //              */
+    //             throw new Error(
+    //                 `
+    //                 Cannot save data with this ${data._id}
+    //                 Some data with this id: "${data._id}" already exist in database.
+    //                 `,
+    //             );
+    //         }
+    //     }
+    //     // if _id don't collaps ........
 
-        // If _id dosen't exist, create random one */
-        const _id = await data._id || crypto.randomUUID();
+    //     // If _id dosen't exist, create random one */
+    //     const _id = await data._id || crypto.randomUUID();
 
-        /**
-         * If `crypto.randomUUID()` generates a existing `UUID`, it will retry this function
-         */
-        const existingData = await kv.get([this.collection, _id]);
-        if (existingData.value) {
-            return this.save(data);
-        }
+    //     /**
+    //      * If `crypto.randomUUID()` generates a existing `UUID`, it will retry this function
+    //      */
+    //     const existingData = await kv.get([this.collection, _id]);
+    //     if (existingData.value) {
+    //         return this.save(data);
+    //     }
 
-        const result = await kv.set([this.collection, _id], { ...data, _id });
-        //? to validate if it is success
-        const savedData = await kv.get([this.collection, _id]);
+    //     const result = await kv.set([this.collection, _id], { ...data, _id });
+    //     //? to validate if it is success
+    //     const savedData = await kv.get([this.collection, _id]);
 
-        return {
-            ok: result.ok,
-            versionstamp: result.versionstamp,
-            data: savedData.value,
-        };
-    }
+    //     return {
+    //         ok: result.ok,
+    //         versionstamp: result.versionstamp,
+    //         data: savedData.value,
+    //     };
+    // }
 
     /**
      * Get a list of filtered data. Pass some `options` to this function and it will fillter all matched data

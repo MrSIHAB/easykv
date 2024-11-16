@@ -1,4 +1,4 @@
-import { kv } from "../mod.ts";
+import { kv } from "../../mod.ts";
 
 export const saveData = async (
     data: Record<string, any>,

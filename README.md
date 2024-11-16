@@ -223,4 +223,36 @@ For example, to retrieve all data:
 const allData = await collection.findMany({});
 ```
 
+### Update a data by ID
+
+```ts
+// Existing data to update
+const userId = "0055"; // Assume this ID exists in the database
+const updateOptions = {
+    name: "SIHAB",
+    age: 20, // Updated age
+};
+
+try {
+    const result = await User.updateOne(userId, updateOptions);
+
+    console.log("Update successful:", result.ok);
+    console.log("Versionstamp:", result.versionstamp);
+    console.log("Updated data:", result.updatedData);
+} catch (error) {
+    console.error("Error updating data:", error.message);
+}
+```
+
+<span style="color: #00ffd0; font-weight: bold">Definition:</span> `updateOne()`
+fanction takes the `ID` of a entry and update the with the given
+`updateOptions`. The function returns:
+
+- `ok`: if the process was successfull,
+- `versionstamp`: VersionStamp of the data
+- `updatedData`: The data after updateing the Previous entry.
+
+The function will return an `Error` if no previous data is available in
+database.
+
 More Options are about launch...

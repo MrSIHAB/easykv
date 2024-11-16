@@ -1,6 +1,7 @@
 import { kv } from "../mod.ts";
-import { saveData } from "./saveData.ts";
-import type { FilterCriteria, Model } from "./types/index.ts";
+import { saveData } from "./helpers/saveData.ts";
+import { updateOnehelper } from "./helpers/updateData.ts";
+import type { FilterCriteria, KeyValue, Model } from "./types/index.ts";
 
 /**
  * Making a bluprint of Collection Class.
@@ -12,17 +13,25 @@ abstract class CollectionMap {
     constructor(public collection: string) {
     }
 
+    // find a data from database with a particuler Id
     public async findById(id: Deno.KvKeyPart): Promise<Model | null> {
         return (await kv.get([this.collection, id])).value as Model;
     }
 
+    // Save something to the database
     abstract save(data: Record<string, unknown>): Promise<object>;
+    // Get a list of data or array of data object by filtering it
+    // If fillter option is null array, It will return all data of this collection
     abstract findMany(
         filter: Record<string, unknown>,
     ): Promise<Model[]>;
 
-    //todo: More options to be include
-    // todo: Update One
+    // Get a Entry by it's ID and update it with given options
+    abstract updateOne(
+        id: Deno.KvKeyPart,
+        options: KeyValue,
+    ): Promise<KeyValue>;
+
     // todo: Update Many
     // todo: is Exist
     // todo: is Unique
@@ -77,49 +86,6 @@ export class Collection extends CollectionMap {
     // deno-lint-ignore no-explicit-any
     save = async (data: Record<string, any>): Promise<Record<string, any>> =>
         await saveData(data, this.collection);
-    // {
-    //     /**
-    //      * If `_id` exist in given object, validating existing datas.
-    //      * So that two same id don't collaps
-    //      */
-    //     if (data._id) {
-    //         const existingData = await kv.get([this.collection, data._id]);
-    //         if (existingData.value) {
-    //             /**
-    //              * if data with same _id exist, Throwing an error.
-    //              * Package user will handle it.
-    //              */
-    //             throw new Error(
-    //                 `
-    //                 Cannot save data with this ${data._id}
-    //                 Some data with this id: "${data._id}" already exist in database.
-    //                 `,
-    //             );
-    //         }
-    //     }
-    //     // if _id don't collaps ........
-
-    //     // If _id dosen't exist, create random one */
-    //     const _id = await data._id || crypto.randomUUID();
-
-    //     /**
-    //      * If `crypto.randomUUID()` generates a existing `UUID`, it will retry this function
-    //      */
-    //     const existingData = await kv.get([this.collection, _id]);
-    //     if (existingData.value) {
-    //         return this.save(data);
-    //     }
-
-    //     const result = await kv.set([this.collection, _id], { ...data, _id });
-    //     //? to validate if it is success
-    //     const savedData = await kv.get([this.collection, _id]);
-
-    //     return {
-    //         ok: result.ok,
-    //         versionstamp: result.versionstamp,
-    //         data: savedData.value,
-    //     };
-    // }
 
     /**
      * Get a list of filtered data. Pass some `options` to this function and it will fillter all matched data
@@ -148,4 +114,26 @@ export class Collection extends CollectionMap {
 
         return result;
     }
+
+    /**
+     * ### Update data with it's id
+     * Example:
+     * ```typescript
+     * const updateOptions = {
+     *  name: "SIHAB", // Previously "Shoaib Hossain"
+     *  dn: "Danbo" // Previously something else
+     * }
+     *
+     * const result = await collection.updateOne(id, updateOptions)
+     * const newData = result.updatedData
+     * ```
+     *
+     * @param id : The unique identifier `_id`
+     * @param options : The data you wants to update
+     * @returns `ok`, `versionstamp`, `updatedData`
+     */
+    override updateOne = async (
+        id: Deno.KvKeyPart,
+        options: KeyValue,
+    ): Promise<KeyValue> => await updateOnehelper(this.collection, id, options);
 }

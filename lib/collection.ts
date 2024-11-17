@@ -1,9 +1,13 @@
 import { kv } from "../mod.ts";
-import { deleteEntry } from "./helpers/delete.kv.ts";
+import { deleteEntry, deleteManyEntry } from "./helpers/delete.kv.ts";
 import { findManyKvEntry } from "./helpers/findManyEntry.ts";
 import { saveData } from "./helpers/saveData.ts";
 import { findOneAndUpdate, updateByIdhelper } from "./helpers/updateData.ts";
-import type { EasyKvDataModel, EasyKvUpdatType } from "./types/index.ts";
+import type {
+    EasyKvDataModel,
+    EasyKvDeleteCount,
+    EasyKvUpdatType,
+} from "./types/index.ts";
 
 /**
  * Making a bluprint of Collection Class.
@@ -43,8 +47,8 @@ abstract class CollectionMap {
     // todo: is Unique
     // todo: Delete Data
     abstract delete(id: Deno.KvKeyPart): Promise<boolean>;
+    abstract deleteMany(options: EasyKvDataModel): Promise<EasyKvDeleteCount>;
     // todo: Delete Collection
-    // todo: Delete Many
     // todo: on event
     // todo: watch
 }
@@ -158,6 +162,35 @@ export class Collection extends CollectionMap {
         updateOptions: EasyKvDataModel,
     ): Promise<EasyKvUpdatType> =>
         await findOneAndUpdate(this.collection, filter, updateOptions);
+
+    /**
+     * Delete a entry by it's id.
+     * example:
+     * ```ts
+     * const result = await collection.delete(id)
+     * ```
+     * @param id
+     * @returns boolean(true, false)
+     */
     override delete = async (id: Deno.KvKeyPart): Promise<boolean> =>
         await deleteEntry(this.collection, id);
+    /**
+     * ### Find the matched entries by the given options and delete them.
+     * example:
+     * ```ts
+     * const matches = {
+     *  name: "Shoaib Hossain",
+     *  age: "20",
+     * }
+     *
+     * const result = await collection.deleteMany(options)
+     * ```
+     *
+     * @param options \{key: value} // matches
+     * @returns \{allOk, totalmatches, deleteEntry, leftEntry}
+     */
+    override deleteMany = async (
+        options: EasyKvDataModel,
+    ): Promise<EasyKvDeleteCount> =>
+        await deleteManyEntry(this.collection, options);
 }

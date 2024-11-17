@@ -5,3 +5,9 @@ export type EasyKvUpdatType = {
     dataOld: EasyKvDataModel;
     dataNew: EasyKvDataModel;
 };
+export type EasyKvDeleteCount = {
+    allOk: boolean;
+    totalmatches: number;
+    deletedEntry: number;
+    leftEntry: number;
+};

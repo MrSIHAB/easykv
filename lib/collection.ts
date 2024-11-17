@@ -1,7 +1,9 @@
 import { kv } from "../mod.ts";
+import { deleteEntry } from "./helpers/delete.kv.ts";
+import { findManyKvEntry } from "./helpers/findManyEntry.ts";
 import { saveData } from "./helpers/saveData.ts";
-import { updateOnehelper } from "./helpers/updateData.ts";
-import type { FilterCriteria, KeyValue, Model } from "./types/index.ts";
+import { findOneAndUpdate, updateByIdhelper } from "./helpers/updateData.ts";
+import type { EasyKvDataModel, EasyKvUpdatType } from "./types/index.ts";
 
 /**
  * Making a bluprint of Collection Class.
@@ -14,8 +16,8 @@ abstract class CollectionMap {
     }
 
     // find a data from database with a particuler Id
-    public async findById(id: Deno.KvKeyPart): Promise<Model | null> {
-        return (await kv.get([this.collection, id])).value as Model;
+    public async findById(id: Deno.KvKeyPart): Promise<EasyKvDataModel | null> {
+        return (await kv.get([this.collection, id])).value as EasyKvDataModel;
     }
 
     // Save something to the database
@@ -24,19 +26,23 @@ abstract class CollectionMap {
     // If fillter option is null array, It will return all data of this collection
     abstract findMany(
         filter: Record<string, unknown>,
-    ): Promise<Model[]>;
+    ): Promise<EasyKvDataModel[]>;
 
     // Get a Entry by it's ID and update it with given options
-    abstract updateOne(
+    abstract updateById(
         id: Deno.KvKeyPart,
-        options: KeyValue,
-    ): Promise<KeyValue>;
+        options: EasyKvDataModel,
+    ): Promise<EasyKvDataModel>;
 
+    abstract findOneAndUpdate(
+        filter: EasyKvDataModel,
+        updateOptions: EasyKvDataModel,
+    ): Promise<EasyKvUpdatType>;
     // todo: Update Many
     // todo: is Exist
     // todo: is Unique
     // todo: Delete Data
-    // todo: Delete Entry
+    abstract delete(id: Deno.KvKeyPart): Promise<boolean>;
     // todo: Delete Collection
     // todo: Delete Many
     // todo: on event
@@ -54,7 +60,7 @@ abstract class CollectionMap {
  * supports hierarchical keys, and EasyKV uses the first key as the collection
  * name. For instance, the string `"user"` passed in the parameter creates a
  * collection called `user` in the database. This acts as the base namespace for
- * all keys stored under this collection. Collections in EasyKV act like models in
+ * all keys stored under this collection. Collections in EasyKV act like EasyKvDataModels in
  * traditional ORMs (e.g., Mongoose). They group related data under a common
  * namespace, enabling you to manage users, products, or other entities in an
  * organized way.
@@ -98,22 +104,10 @@ export class Collection extends CollectionMap {
      * @param filter Record<string, any>
      * @returns Record<string, any>
      */
-    async findMany(
-        filter: FilterCriteria,
-    ): Promise<Model[]> {
-        const result: Model[] = [];
-
-        for await (const entry of kv.list({ prefix: [this.collection] })) {
-            const data = entry.value as Model;
-
-            const matches = Object.entries(filter).every(([key, value]) =>
-                data[key] === value
-            );
-            if (matches) result.push(data);
-        }
-
-        return result;
-    }
+    findMany = async (
+        filter: EasyKvDataModel,
+    ): Promise<EasyKvDataModel[]> =>
+        await findManyKvEntry(this.collection, filter);
 
     /**
      * ### Update data with it's id
@@ -124,16 +118,46 @@ export class Collection extends CollectionMap {
      *  dn: "Danbo" // Previously something else
      * }
      *
-     * const result = await collection.updateOne(id, updateOptions)
-     * const newData = result.updatedData
+     * const result = await collection.updateById(id, updateOptions)
+     * const oldData = result.dataOld
+     * const newData = result.dataNew
      * ```
      *
      * @param id : The unique identifier `_id`
      * @param options : The data you wants to update
      * @returns `ok`, `versionstamp`, `updatedData`
      */
-    override updateOne = async (
+    override updateById = async (
         id: Deno.KvKeyPart,
-        options: KeyValue,
-    ): Promise<KeyValue> => await updateOnehelper(this.collection, id, options);
+        options: EasyKvDataModel,
+    ): Promise<EasyKvDataModel> =>
+        await updateByIdhelper(this.collection, id, options);
+    /**
+     * ### Find by filter and Update
+     *
+     * example:
+     * ```ts
+     * const result = await collection.findOneAndUpdate(filter, updateOptions)
+     *
+     * const { ok, versionstamp, dataOld, dataNew } = result;
+     *
+     * console.log(ok)
+     * console.log(versionstamp)
+     * console.log(dataOld)
+     * console.log(dataNew)
+     * ```
+     * This function helps to find a specific entry and update it with given options
+     * If multiple entries found, it will update the first entry.
+     *
+     * @param filter {key: value}
+     * @param updateOptions {key: updatedValue}
+     * @returns {ok, versionstamp, dataOld, dataNew}
+     */
+    override findOneAndUpdate = async (
+        filter: EasyKvDataModel,
+        updateOptions: EasyKvDataModel,
+    ): Promise<EasyKvUpdatType> =>
+        await findOneAndUpdate(this.collection, filter, updateOptions);
+    override delete = async (id: Deno.KvKeyPart): Promise<boolean> =>
+        await deleteEntry(this.collection, id);
 }

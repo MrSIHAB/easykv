@@ -1,15 +1,16 @@
-import { kv } from "../../mod.ts";
+import { type EasyKvDataModel, kv } from "../../mod.ts";
 
 export const saveData = async (
-    data: Record<string, any>,
+    data: EasyKvDataModel,
     collection: string,
-): Promise<Record<string, any>> => {
+): Promise<EasyKvDataModel> => {
+    const givenId = await data._id as Deno.KvKeyPart;
     /**
      * If `_id` exist in given object, validating existing datas.
      * So that two same id don't collaps
      */
-    if (data._id) {
-        const existingData = await kv.get([collection, data._id]);
+    if (givenId) {
+        const existingData = await kv.get([collection, givenId]);
         if (existingData.value) {
             /**
              * if data with same _id exist, Throwing an error.
@@ -26,7 +27,7 @@ export const saveData = async (
     // if _id don't collaps ........
 
     // If _id dosen't exist, create random one */
-    const _id = await data._id || crypto.randomUUID();
+    const _id = givenId || crypto.randomUUID();
 
     /**
      * If `crypto.randomUUID()` generates a existing `UUID`, it will retry this function

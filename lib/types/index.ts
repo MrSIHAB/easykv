@@ -1,4 +1,7 @@
-// deno-lint-ignore-file no-explicit-any
-export type FilterCriteria = { [key: string]: any };
-export type Model = { [key: string]: any };
-export type KeyValue = Record<string, unknown>;
+export type EasyKvDataModel = { [key: string]: unknown };
+export type EasyKvUpdatType = {
+    ok: boolean;
+    versionstamp: unknown;
+    dataOld: EasyKvDataModel;
+    dataNew: EasyKvDataModel;
+};

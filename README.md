@@ -9,6 +9,8 @@ Mongoose, EasyKV simplifies database interactions in Deno applications.
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/MrSIHAB/EasyKV/blob/main/LICENSE)
 [![Deno Version](https://img.shields.io/badge/Deno-2.0-white)](https://deno.com)
 
+<a href="https://www.buymeacoffee.com/mrsihab"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=mrsihab&button_colour=00DFDF&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
+
 <!-- [![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](#) -->
 
 </div>
@@ -223,7 +225,7 @@ For example, to retrieve all data:
 const allData = await collection.findMany({});
 ```
 
-### Update a data by ID
+### Update data by ID
 
 ```ts
 // Existing data to update
@@ -234,25 +236,66 @@ const updateOptions = {
 };
 
 try {
-    const result = await User.updateOne(userId, updateOptions);
+    const result = await User.updateById(userId, updateOptions);
 
     console.log("Update successful:", result.ok);
     console.log("Versionstamp:", result.versionstamp);
-    console.log("Updated data:", result.updatedData);
+    console.log("Updated data:", result.dataNew);
+    console.log("Updated data:", result.dataOld);
 } catch (error) {
     console.error("Error updating data:", error.message);
 }
 ```
 
-<span style="color: #00ffd0; font-weight: bold">Definition:</span> `updateOne()`
-fanction takes the `ID` of a entry and update the with the given
+<span style="color: #00ffd0; font-weight: bold">Definition:</span>
+`updatebyId()` fanction takes the `ID` of a entry and update the with the given
 `updateOptions`. The function returns:
 
 - `ok`: if the process was successfull,
 - `versionstamp`: VersionStamp of the data
-- `updatedData`: The data after updateing the Previous entry.
+- `dataOld`: Existing data before update.
+- `dataNew`: The data after updateing the Previous entry.
 
 The function will return an `Error` if no previous data is available in
 database.
 
-More Options are about launch...
+### Filter One Data and Update it.
+
+```ts
+const filter = {
+    name: "Shoaib Hossain",
+    email: "MrSIHAB@hotmail.com",
+};
+
+const updateOptions = {
+    name: "Sihab"
+    friends: ["Shruti Munde"],
+    followers: ["Jhon", "Doe", "Danbo", "others"],
+};
+
+const result = await User.updateOneAndUpdate(filter, UpdteOptions);
+```
+
+<span style="color: #00ffd0; font-weight: bold">Definition:</span> This funtion
+works similer as Previous `collection.updateById()` function. But it take an
+`object` instead of `id`. You can pass Id as filterOption`{_id: id}`. This
+funtion filters al entry and find the atual entry to update. If multiple entry
+match with the filter criteria, it will update the `first one`. So, make sure
+the given critera finds unique one.
+
+### Delete an Entry
+
+```ts
+const result = await User.delete(id); // returns a boolean value
+
+if (result) {
+    console.log("User Was removed successfully");
+}
+```
+
+<span style="color: #00ffd0; font-weight: bold">Definition:</span>
+`Collection.delete()` function requires the `id` of an entry to remove it
+completely.
+
+More Options are about launch...\
+Till then contribute with me to make this library more better as it can.

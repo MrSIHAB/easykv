@@ -297,5 +297,40 @@ if (result) {
 `Collection.delete()` function requires the `id` of an entry to remove it
 completely.
 
-More Options are about launch...\
-Till then contribute with me to make this library more better as it can.
+### Delete whole collection
+
+```ts
+const isDeleted = await User.deletCollection(
+    wantsToRemoveEveryThingOfThisCollection: true, // Just for reduce accidents
+)
+if (isDeleted){
+    console.log("All the information of this collection was deleted!!!")
+}
+```
+
+<span style="color: #00ffd0; font-weight: bold">Definition:</span> Internally it
+uses deleteMany function to delete every entry.
+`wantsToRemoveEveryThingOfThisCollection` was included to reduce accidents.
+
+### IsExist and IsUniqe
+
+```ts
+const criteria = {
+    name: "Shaoib Hossain",
+    age: 105,
+};
+
+const isExist = await User.isExist(criteria); // returns boolean(false)
+const isUnique = await User.isUnique(criteria); // returns boolean(true)
+```
+
+<span style="color: #00ffd0; font-weight: bold">Definition:</span> `IsExist()`
+ckecks if any entry exists in database with given criteria. If any entry matchs,
+it returns `true` else `false`.\
+The `isUnique()` function do just it's opposite. Internally it calls the
+`isExist()` function and returns it's opposite(`true`=>`false` || `false` =>
+`true`).
+
+## License
+
+**EasyKV** was Published Under [MIT](./LICENSE) License.

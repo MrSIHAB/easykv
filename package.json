@@ -1,0 +1,27 @@
+{
+  "name": "easykv",
+  "version": "0.1.3",
+  "description": "A lightweight and flexible library for working with Deno KV. Inspired by",
+  "main": "mod.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "deno test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrSIHAB/easykv.git"
+  },
+  "keywords": [
+    "Deno",
+    "KV",
+    "ORM"
+  ],
+  "author": "SIHAB",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MrSIHAB/easykv/issues"
+  },
+  "homepage": "https://github.com/MrSIHAB/easykv#readme"
+}

@@ -1,4 +1,5 @@
-import { kv } from "../mod.ts";
+import { getKv } from "../mod.ts";
+import { CollectionMap } from "./collection.abstract.ts";
 import { deleteEntry, deleteManyEntry } from "./helpers/delete.kv.ts";
 import { findManyKvEntry } from "./helpers/findManyEntry.ts";
 import { saveData } from "./helpers/saveData.ts";
@@ -15,43 +16,6 @@ import type {
  * There are some simple function includeed in this class to do small task. Those function
  * can be `ovveride` later.
  */
-abstract class CollectionMap {
-    constructor(public collection: string) {
-    }
-
-    // find a data from database with a particuler Id
-    public async findById(id: Deno.KvKeyPart): Promise<EasyKvDataModel | null> {
-        return (await kv.get([this.collection, id])).value as EasyKvDataModel;
-    }
-
-    // Save something to the database
-    abstract save(data: Record<string, unknown>): Promise<object>;
-    // Get a list of data or array of data object by filtering it
-    // If fillter option is null array, It will return all data of this collection
-    abstract findMany(
-        filter: Record<string, unknown>,
-    ): Promise<EasyKvDataModel[]>;
-
-    // Get a Entry by it's ID and update it with given options
-    abstract updateById(
-        id: Deno.KvKeyPart,
-        options: EasyKvDataModel,
-    ): Promise<EasyKvDataModel>;
-
-    abstract findOneAndUpdate(
-        filter: EasyKvDataModel,
-        updateOptions: EasyKvDataModel,
-    ): Promise<EasyKvUpdatType>;
-    // todo: Update Many
-    // todo: is Exist
-    // todo: is Unique
-    // todo: Delete Data
-    abstract delete(id: Deno.KvKeyPart): Promise<boolean>;
-    abstract deleteMany(options: EasyKvDataModel): Promise<EasyKvDeleteCount>;
-    // todo: Delete Collection
-    // todo: on event
-    // todo: watch
-}
 
 /**
  * Example:
@@ -76,6 +40,8 @@ export class Collection extends CollectionMap {
     }
 
     /**
+     * * ###  Save Method
+     *
      * This function saves data(object) to denoKv database.
      * one example :
      * ```typescript
@@ -98,6 +64,31 @@ export class Collection extends CollectionMap {
         await saveData(data, this.collection);
 
     /**
+     * *  ###   Find an entry by it's `_id`
+     *
+     * Function takes the `id` of an entry and returns that `entry` with confirmation option `ok` \
+     * For example:
+     * ```ts
+     * const result = await User.findById("150055")
+     * const entry = result.value
+     *
+     * result.value // the entry if found
+     * result.ok // wheter oparation was succesfull or not.
+     * result.versionstamp // To manage data // auto maintained
+     * ```
+     *
+     * @param id Unique `_id`
+     * @returns {ok, versionstamp, value: "You'r queried data"}
+     */
+    override async findById(
+        id: Deno.KvKeyPart,
+    ): Promise<Deno.KvEntryMaybe<unknown> | null> {
+        const kv = getKv();
+        return (await kv.get([this.collection, id]));
+    }
+    /**
+     * * ### Find multiple options by Filtering it
+     *
      * Get a list of filtered data. Pass some `options` to this function and it will fillter all matched data
      *
      * Leave a empty object `{}` to get all data of this collection.
@@ -114,7 +105,54 @@ export class Collection extends CollectionMap {
         await findManyKvEntry(this.collection, filter);
 
     /**
-     * ### Update data with it's id
+     * * ###    Is same data exist?
+     * You can pass any criteria in this function's patameter. It will
+     * check if any data exist with same criteria or not.
+     * Returns true when any data exist. Else false.
+     * For Ex:
+     * ```ts
+     * const criteria = {
+     *  name: "Shruti Munde",
+     *  age: 17,
+     * }
+     *
+     * const isExist = await User.isExist(criteria)
+     * if(isExist){
+     *  console.log("User eixst with this criteria.")
+     * }
+     * ```
+     * @param options \{key, value}
+     * @returns Promise\<boolean>
+     */
+    override async isExist(options: EasyKvDataModel): Promise<boolean> {
+        const data = await findManyKvEntry(this.collection, options);
+        return data.length != 0 ? false : true;
+    }
+    /**
+     * * ###    Is same data exist?
+     * You can pass any criteria in this function's patameter. It will
+     * check if given data is unique.
+     * Returns true when any no data exist and Proved to be unique. Else false.
+     * For Ex:
+     * ```ts
+     * const criteria = {
+     *  name: "Shoaib Hossain",
+     *  age: 18,
+     * }
+     *
+     * const isUnique = await User.isUnique(criteria)
+     * if(!isUnique){
+     *  console.log("A data alreasy existeds with same criteria.")
+     * }
+     * ```
+     * @param options \{key, value}
+     * @returns Promise\<boolean>
+     */
+    override isUnique = async (option: EasyKvDataModel): Promise<boolean> =>
+        !(await this.isExist(option)); //!  Returning the opposite of isExist()
+
+    /**
+     * * ### Update data with it's id
      * Example:
      * ```typescript
      * const updateOptions = {
@@ -134,10 +172,10 @@ export class Collection extends CollectionMap {
     override updateById = async (
         id: Deno.KvKeyPart,
         options: EasyKvDataModel,
-    ): Promise<EasyKvDataModel> =>
+    ): Promise<EasyKvUpdatType> =>
         await updateByIdhelper(this.collection, id, options);
     /**
-     * ### Find by filter and Update
+     * * ### Find by filter and Update
      *
      * example:
      * ```ts
@@ -164,7 +202,7 @@ export class Collection extends CollectionMap {
         await findOneAndUpdate(this.collection, filter, updateOptions);
 
     /**
-     * Delete a entry by it's id.
+     * * ### Delete a entry by it's id.
      * example:
      * ```ts
      * const result = await collection.delete(id)
@@ -174,8 +212,9 @@ export class Collection extends CollectionMap {
      */
     override delete = async (id: Deno.KvKeyPart): Promise<boolean> =>
         await deleteEntry(this.collection, id);
+
     /**
-     * ### Find the matched entries by the given options and delete them.
+     * * ### Find the matched entries by the given options and delete them.
      * example:
      * ```ts
      * const matches = {
@@ -193,4 +232,13 @@ export class Collection extends CollectionMap {
         options: EasyKvDataModel,
     ): Promise<EasyKvDeleteCount> =>
         await deleteManyEntry(this.collection, options);
+
+    override deleteCollection = async (
+        confirmation: { wantsToRemoveEveryThingOfThisCollection: boolean },
+    ): Promise<boolean> => {
+        if (!confirmation.wantsToRemoveEveryThingOfThisCollection) {
+            return false;
+        }
+        return (await deleteManyEntry(this.collection, {})).allOk;
+    };
 }

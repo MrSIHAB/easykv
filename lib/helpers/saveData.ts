@@ -1,9 +1,10 @@
-import { type EasyKvDataModel, kv } from "../../mod.ts";
+import { type EasyKvDataModel, getKv } from "../../mod.ts";
 
 export const saveData = async (
     data: EasyKvDataModel,
     collection: string,
 ): Promise<EasyKvDataModel> => {
+    const kv = getKv();
     const givenId = await data._id as Deno.KvKeyPart;
     /**
      * If `_id` exist in given object, validating existing datas.

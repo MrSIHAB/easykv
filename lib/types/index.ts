@@ -11,3 +11,7 @@ export type EasyKvDeleteCount = {
     deletedEntry: number;
     leftEntry: number;
 };
+export type EasyKvDisconnectKvType = {
+    message: string;
+    ok: boolean;
+};

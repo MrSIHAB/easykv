@@ -1,4 +1,4 @@
-import { kv } from "../db.kv.ts";
+import { getKv } from "../database/index.ts";
 import type { EasyKvDataModel, EasyKvDeleteCount } from "../types/index.ts";
 import { findManyKvEntry } from "./findManyEntry.ts";
 
@@ -6,6 +6,7 @@ export const deleteEntry = async (
     collection: string,
     id: Deno.KvKeyPart,
 ): Promise<boolean> => {
+    const kv = getKv();
     try {
         await kv.delete([collection, id]);
         return true;
@@ -18,6 +19,7 @@ export const deleteManyEntry = async (
     collection: string,
     options: EasyKvDataModel,
 ): Promise<EasyKvDeleteCount> => {
+    const kv = getKv();
     const matchList = await findManyKvEntry(collection, options);
 
     for await (const entry of matchList) {

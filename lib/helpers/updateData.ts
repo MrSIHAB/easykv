@@ -1,4 +1,4 @@
-import { kv } from "../../mod.ts";
+import { getKv } from "../../mod.ts";
 import type { EasyKvDataModel, EasyKvUpdatType } from "../types/index.ts";
 import { findManyKvEntry } from "./findManyEntry.ts";
 
@@ -14,6 +14,7 @@ export const updateByIdhelper = async (
     id: Deno.KvKeyPart,
     options: EasyKvDataModel,
 ): Promise<EasyKvUpdatType> => {
+    const kv = getKv();
     const previousEntry = await kv.get([collection, id]);
 
     if (!previousEntry.value) {
@@ -50,6 +51,7 @@ export const findOneAndUpdate = async (
     filter: EasyKvDataModel,
     updateOptions: EasyKvDataModel,
 ): Promise<EasyKvUpdatType> => {
+    const kv = getKv();
     const dataOld = (await findManyKvEntry(collection, filter))[0];
 
     if (!dataOld) throw new Error("No previos data found");

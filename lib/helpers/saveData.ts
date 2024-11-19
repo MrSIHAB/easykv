@@ -1,9 +1,10 @@
 import { type EasyKvDataModel, getKv } from "../../mod.ts";
+import type { EasyKVSaveResponse } from "../types/index.ts";
 
 export const saveData = async (
     data: EasyKvDataModel,
     collection: string,
-): Promise<EasyKvDataModel> => {
+): Promise<EasyKVSaveResponse> => {
     const kv = getKv();
     const givenId = await data._id as Deno.KvKeyPart;
     /**
@@ -45,6 +46,6 @@ export const saveData = async (
     return {
         ok: result.ok,
         versionstamp: result.versionstamp,
-        data: savedData.value,
+        value: savedData.value as EasyKvDataModel,
     };
 };

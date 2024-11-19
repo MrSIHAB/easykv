@@ -3,15 +3,16 @@ import type {
     EasyKvDeleteCount,
     EasyKvUpdatType,
 } from "../mod.ts";
+import type { EasyKvFindById, EasyKVSaveResponse } from "./types/index.ts";
 
 export abstract class CollectionMap {
     constructor(public collection: string) {
     }
 
-    abstract save(data: Record<string, unknown>): Promise<object>;
+    abstract save(data: EasyKvDataModel): Promise<EasyKVSaveResponse>;
     abstract findById(
         id: Deno.KvKeyPart,
-    ): Promise<Deno.KvEntryMaybe<unknown> | null>;
+    ): Promise<EasyKvFindById | null>;
     abstract findMany(
         filter: Record<string, unknown>,
     ): Promise<EasyKvDataModel[]>;

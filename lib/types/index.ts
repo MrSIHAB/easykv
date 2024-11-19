@@ -1,4 +1,14 @@
 export type EasyKvDataModel = { [key: string]: unknown };
+export type EasyKVSaveResponse = {
+    ok: boolean;
+    versionstamp: string | null;
+    value: EasyKvDataModel;
+};
+export type EasyKvFindById = {
+    ok: boolean;
+    versionstamp: string | null;
+    value: EasyKvDataModel;
+};
 export type EasyKvUpdatType = {
     ok: boolean;
     versionstamp: unknown;

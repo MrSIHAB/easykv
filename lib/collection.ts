@@ -7,6 +7,8 @@ import { findOneAndUpdate, updateByIdhelper } from "./helpers/updateData.ts";
 import type {
     EasyKvDataModel,
     EasyKvDeleteCount,
+    EasyKvFindById,
+    EasyKVSaveResponse,
     EasyKvUpdatType,
 } from "./types/index.ts";
 
@@ -55,13 +57,13 @@ export class Collection extends CollectionMap {
      * returns {
      *  ok: boolean,
      *  versionstamp: string
-     *  givenData
+     *  value
      * }
      * ```
      */
-    // deno-lint-ignore no-explicit-any
-    save = async (data: Record<string, any>): Promise<Record<string, any>> =>
-        await saveData(data, this.collection);
+    override save = async (
+        data: EasyKvDataModel,
+    ): Promise<EasyKVSaveResponse> => await saveData(data, this.collection);
 
     /**
      * *  ###   Find an entry by it's `_id`
@@ -82,9 +84,11 @@ export class Collection extends CollectionMap {
      */
     override async findById(
         id: Deno.KvKeyPart,
-    ): Promise<Deno.KvEntryMaybe<unknown> | null> {
+    ): Promise<EasyKvFindById | null> {
         const kv = getKv();
-        return (await kv.get([this.collection, id]));
+        const { value, versionstamp } = await kv.get([this.collection, id]);
+        const ok = value ? true : false;
+        return { value: value as EasyKvDataModel, versionstamp, ok };
     }
     /**
      * * ### Find multiple options by Filtering it
@@ -126,7 +130,7 @@ export class Collection extends CollectionMap {
      */
     override async isExist(options: EasyKvDataModel): Promise<boolean> {
         const data = await findManyKvEntry(this.collection, options);
-        return data.length != 0 ? false : true;
+        return data.length != 0 ? true : false;
     }
     /**
      * * ###    Is same data exist?

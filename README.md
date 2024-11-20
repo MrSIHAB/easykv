@@ -5,7 +5,7 @@
 A lightweight and flexible library for working with Deno KV. Inspired by
 Mongoose, EasyKV simplifies database interactions in Deno applications.
 
-[![Lib Version](https://img.shields.io/badge/Version-v0.1.1-0cb)](https://jsr.io/@easykv/easykv)
+[![Lib Version](https://img.shields.io/badge/Version-v0.2.0-0cb)](https://jsr.io/@easykv/easykv)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/MrSIHAB/EasyKV/blob/main/LICENSE)
 [![Deno Version](https://img.shields.io/badge/Deno-2.0-white)](https://deno.com)
 
@@ -19,15 +19,16 @@ Mongoose, EasyKV simplifies database interactions in Deno applications.
 
 - [Introduction](#introduction)
 - [Installation](#installation)
-- [Usage](#usage)
-  - [Defining a Schema](#defining-a-schema)
-  - [Saving Data](#saving-data)
-  - [Querying Data](#querying-data)
 - [Quick Start](#quick-start)
-- [Features](#features)
 - [API Reference](#api-reference)
+  - [Saving Data](#save-some-data-to-the-database)
+  - [Querying Data](#get-data-from-the-database)
+  - [update Data](#update-data-by-id)
+  - [Delete Entry](#delete-an-entry)
 - [Contributing](#contributing)
 - [License](#license)
+
+<!-- - [Features](#features) -->
 
 ## Intruduction
 
@@ -53,6 +54,54 @@ With EasyKV, you can:
 - Query, filter, and manage data with ease.
 - Retrieve multiple records simultaneously using flexible filters.
 
+## Database Structure
+
+DenoKv's multiple key system unlocks the flexibility of databse. This can follow
+multiple structure like SQL, NoSQl, TreeShape etc. This EasyKv library is highly
+inspired by mongoose. The Structure I made for this is:
+
+- **Database**: The main database. You can specify the database location by
+  `EasyVk.connect(location)` [Reference=>](#connect-database)
+- **Collection**: The collection is the main and most used class of this
+  library. Collection is a group. A group where you gonna save all similar types
+  of entries. For example: A `User` collection contains all user's data. A
+  collection works like a _**model**_ of other orms(e.g. Mongoose).
+  [Reference=>](#create-a-collection)
+- **Enrty**: After creating a collection, you can save data as `JSON` or
+  `Object{}` format. Each `object` which is being saved is called `entry`.
+- **Data**: The information an `entry` contains is called `data`.
+
+```bash
+Database      
+       |--- Collections
+       |    |---------- Entry
+       |    |           |------ Key: value
+       |    |           |------ Key: value
+       |    |           |------ Key: value
+       |    |           
+       |    |           
+       |    |---------- Entry
+       |                |------ Key: value
+       |                |------ Key: value
+       |                |------ Key: value
+       |                
+       |--- Collections
+       |    |---------- Entry
+       |    |           |------ Key: value
+       |    |           |------ Key: value
+       |    |           |------ Key: value
+       |    |           
+       |    |---------- Entry
+       |    |           |------ Key: value
+       |    |           |------ Key: value
+       |    |           |------ Key: value
+       |    |           
+       |    |---------- Entry
+       |                |------ Key: value
+       |                |------ Key: value
+       |                |------ Key: value
+```
+
 ## Installation
 
 EasyKV is designed exclusively for Deno to simplify working with its built-in KV
@@ -62,6 +111,14 @@ your project:
 #### Prerequisites
 
 - Deno v2.0 or higher is recommended.
+
+### Install via Deno Official Repository
+
+Run the following command in your terminal to add EasyKv to your project:
+
+```console
+deno add easykv
+```
 
 ### Install via JSR
 
@@ -77,9 +134,53 @@ Alternatively, you can directly import EasyKV into your project:
 
 ```typescript
 import * as easykv from "jsr:@easykv/easykv";
+// Or...
+import * as easykv from "https://deno.land/x/easykv";
 ```
 
 ## Quick Start
+
+## API Reference
+
+- [Database](#connect-database)
+  - [Collection](#create-a-collection)
+    - [Save data](#save-some-data-to-the-database)
+    - [Get Data](#get-data-from-the-database)
+    - [Search or Filter Data](#search-or-filter-data)
+    - [Update Data By ID](#update-data-by-id)
+    - [Filter data and update many data](#filter-one-data-and-update-it)
+    - [Delete Entry](#delete-an-entry)
+    - [isExist & isUnique](#isexist-and-isuniqe)
+  - [Delete Collection](#delete-whole-collection)
+  - [Get all entry of a collection](#search-or-filter-data)
+- [Get Kv DataBase instance]()
+- [Connect Database]()
+- [Disconnect Database]()
+
+### Connect Database
+
+```ts
+import * as EasyKv from "@easykv/easykv";
+
+await EasyKv.connect();
+// If you have any specific remote locaion or local path,
+//you can pass that in parameter.
+```
+
+<span style="color: #00ffd0; font-weight: bold">Definition:</span> EasyKv comes
+with a `connect()` function. This allows you to connect your DenoKV database.
+Just call this function to create a local datdbase.
+
+- If you wants to connect a remote database here, you can pass the link to the
+  parameter. Ex. `connect(location)`
+- If you want to include a local path, you can also do that like this :
+  `connect("./database")`.\
+  **Note:** in that case, you have to give read and write permission. to give
+  _read_ & _write_ permission you can pass `-RW` flag while running.
+
+```bash
+deno run -RW --unstable-kv main.ts
+```
 
 ### Create a Collection
 
@@ -273,7 +374,7 @@ const updateOptions = {
     followers: ["Jhon", "Doe", "Danbo", "others"],
 };
 
-const result = await User.updateOneAndUpdate(filter, UpdteOptions);
+const result = await User.findOneAndUpdate(filter, UpdteOptions);
 ```
 
 <span style="color: #00ffd0; font-weight: bold">Definition:</span> This funtion
@@ -300,11 +401,11 @@ completely.
 ### Delete whole collection
 
 ```ts
-const isDeleted = await User.deletCollection(
+const isDeleted = await User.deletCollection({
     wantsToRemoveEveryThingOfThisCollection: true, // Just for reduce accidents
-)
-if (isDeleted){
-    console.log("All the information of this collection was deleted!!!")
+});
+if (isDeleted) {
+    console.log("All the information of this collection was deleted!!!");
 }
 ```
 

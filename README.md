@@ -333,4 +333,4 @@ The `isUnique()` function do just it's opposite. Internally it calls the
 
 ## License
 
-**EasyKV** was Published Under [MIT](./LICENSE) License.
+This project(**EasyKv**) is licensed under the [MIT License](LICENSE).

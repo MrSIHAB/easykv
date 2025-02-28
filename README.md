@@ -58,7 +58,7 @@ import * as EasyKV from 'jsr:@easykv/easykv'
 import { Hono } from 'jsr:@hono/hono'
 
 const app = new Hono(); // Initializing handler app 
-await easyKv.connect("/db") // Connecting Database to specific path or URL
+await EasyKv.connect("/db") // Connecting Database to specific path or URL
 const UserCollection = await new EasyKv.Collection("user") // Creating new user collection
 
 // Listening /user route

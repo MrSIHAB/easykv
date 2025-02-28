@@ -204,7 +204,7 @@ deno run -RW --unstable-kv main.ts
 import { Collection } from "@easykv/easykv";
 
 // Create a "User" collection or model
-const User = new Collection("user");
+const UserCollection = new Collection("user");
 
 // Example: Create another collection for products
 const Product = new Collection("product");
@@ -222,21 +222,14 @@ organized way.
 ### Save Some Data to the Database
 
 ```typescript
-import { Collection } from "@easykv/easykv";
-
-// Create a collection or model
-const User = new Collection("user");
-
-// Data to be stored in the database
 const data = {
     name: "MrSIHAB",
     age: 19,
     country: "Bangladesh",
-    dn: "Dark-Ness",
 };
 
 // Save the data to the "user" collection
-const result = await User.save(data);
+const result = await UserCollection.save(data);
 
 // Log the result
 console.log(result.ok); // Boolean indicating if the save was successful

@@ -1,9 +1,10 @@
 <div align="center">
 
-# EasyKV by MrSIHAB
+# EasyKV
 
-A lightweight and flexible library for working with Deno KV. Inspired by
-Mongoose, EasyKV simplifies database interactions in Deno applications.
+## By MrSIHAB
+
+A lightweight and flexible library that let you use DenoKv easily.
 
 [![Lib Version](https://img.shields.io/badge/Version-v0.2.0-0cb)](https://jsr.io/@easykv/easykv)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/MrSIHAB/EasyKV/blob/main/LICENSE)
@@ -37,22 +38,38 @@ database. It simplifies working with Deno KV, making it easier and more
 efficient to use. Whether you're new to Deno KV or planning to use it in
 large-scale applications, EasyKV provides the tools to streamline your workflow.
 
-We think: Deno KV is often perceived as a simple database, suitable only for
-storing tokens or short-term data, and not ideal for complex programs.
-`But what if it could handle more?` At its core, EasyKV was built to unlock the
-full potential of Deno KV and make it production-ready for larger projects.
-
-With EasyKV, I wanted to take something simple and make it even simpler without
-compromising on flexibility or power. While Deno KV is a great built-in option,
-it can be challenging to scale for big projects. That's why I created EasyKV—not
-just to make my workflow easier, but to make yours easier too.
-
 With EasyKV, you can:
 
 - Easily interact with Deno KV.
 - Save, update, and delete data effortlessly.
 - Query, filter, and manage data with ease.
 - Retrieve multiple records simultaneously using flexible filters.
+
+## Quick Start
+
+```js
+/*
+This is an example of EasyKv with Hono framework.
+Note: EasyKv is not dependent to any frameworks. It's directly made with Deno's core
+elements. So, it will work with any deno environment.
+*/
+
+import * as EasyKV from 'jsr:@easykv/easykv'
+import { Hono } from 'jsr:@hono/hono'
+
+const app = new Hono(); // Initializing handler app 
+await EasyKv.connect("/db") // Connecting Database to specific path or URL
+const UserCollection = await new EasyKv.Collection("user") // Creating new user collection
+
+// Listening /user route
+app.get("/user", async (context)=> {
+const { name, age, hobby } = c.req.body; // Getting data from frontend
+const user = { _id: 1, name, age, hobby }; // making User object
+await UserCollection.save(user); // Saving user to database
+})
+
+Deno.serve(app)// Listening app
+```
 
 ## Database Structure
 
@@ -138,7 +155,6 @@ import * as easykv from "jsr:@easykv/easykv";
 import * as easykv from "https://deno.land/x/easykv";
 ```
 
-## Quick Start
 
 ## API Reference
 
@@ -188,7 +204,7 @@ deno run -RW --unstable-kv main.ts
 import { Collection } from "@easykv/easykv";
 
 // Create a "User" collection or model
-const User = new Collection("user");
+const UserCollection = new Collection("user");
 
 // Example: Create another collection for products
 const Product = new Collection("product");
@@ -206,21 +222,14 @@ organized way.
 ### Save Some Data to the Database
 
 ```typescript
-import { Collection } from "@easykv/easykv";
-
-// Create a collection or model
-const User = new Collection("user");
-
-// Data to be stored in the database
 const data = {
     name: "MrSIHAB",
     age: 19,
     country: "Bangladesh",
-    dn: "Dark-Ness",
 };
 
 // Save the data to the "user" collection
-const result = await User.save(data);
+const result = await UserCollection.save(data);
 
 // Log the result
 console.log(result.ok); // Boolean indicating if the save was successful

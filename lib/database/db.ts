@@ -1,4 +1,4 @@
-import type { EasyKvDisconnectKvType } from "../types/index.ts";
+import type { EKDisconnectKvType } from "../types/index.ts";
 
 /**
  *  `Kv` is the main instance of `Deno.openKv()`. In some critical situations,
@@ -26,7 +26,7 @@ export abstract class Database {
         return Database.kv ? true : false;
     }
 
-    public static disconnect(): EasyKvDisconnectKvType {
+    public static disconnect(): EKDisconnectKvType {
         if (!Database.kv) {
             return {
                 message: "No database is connected",

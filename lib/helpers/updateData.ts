@@ -1,6 +1,6 @@
-import { getKv } from "../../mod.ts";
-import type { EasyKvDataModel, EasyKvUpdatType } from "../types/index.ts";
-import { findManyKvEntry } from "./findManyEntry.ts";
+import {getKv} from "../../mod.ts";
+import type {EKDataModel, EKUpdateType} from "../types/index.ts";
+import {findManyKvEntry} from "./findManyEntry.ts";
 
 /**
  * Find a specific entry by it's `_id` and update it.
@@ -9,31 +9,48 @@ import { findManyKvEntry } from "./findManyEntry.ts";
  * @param options {key: value}
  * @returns {ok, versionstamp, dataOld, dataNew}
  */
-export const updateByIdhelper = async (
-    collection: string,
-    id: Deno.KvKeyPart,
-    options: EasyKvDataModel,
-): Promise<EasyKvUpdatType> => {
-    const kv = getKv();
-    const previousEntry = await kv.get([collection, id]);
+export const updateByIdHelper = async <T extends EKDataModel>(
+  collection: string,
+  id: Deno.KvKeyPart,
+  options: EKDataModel,
+): Promise<EKUpdateType<T>> => {
+  const kv = getKv();
+  const previousEntry = await kv.get<T>([collection, id]);
 
-    if (!previousEntry.value) {
-        throw new Error(`No data exist with this ID : ${id.toString()}`);
-    }
-
-    const dataOld = previousEntry.value as EasyKvDataModel;
-    const dataNew = await { ...dataOld, ...options };
-    // setting new data
-    const { ok, versionstamp } = await kv.set([collection, id], dataNew);
-
-    if (!ok) throw new Error("Something went wrong");
-
+  if (!previousEntry.value) {
     return {
-        ok,
-        versionstamp,
-        dataNew,
-        dataOld,
+      ok: false,
+      versionstamp: null,
+      dataNew: null,
+      dataOld: null,
     };
+  }
+
+  const dataOld: T = previousEntry.value;
+  let dataNew: T = { ...dataOld, ...options };
+  // setting new data
+  const { ok, versionstamp } = await kv.set([collection, id], dataNew);
+
+  if (!ok) {
+    throw new Error(
+      "Something went wrong. Could not update data. Please check database connection and try again.",
+    );
+  }
+
+  const updatedEntry = await (kv.get<T>([collection, id]));
+  if (!updatedEntry.value) {
+    throw new Error(
+      "Something went wrong. Could not find Updated data.",
+    );
+  }
+  dataNew = updatedEntry.value;
+
+  return {
+    ok,
+    versionstamp,
+    dataNew,
+    dataOld,
+  };
 };
 
 /**
@@ -46,29 +63,30 @@ export const updateByIdhelper = async (
  * @param updateOptions {key: updatedValue}
  * @returns {ok, versionstamp, dataOld, dataNew}
  */
-export const findOneAndUpdate = async (
-    collection: string,
-    filter: EasyKvDataModel,
-    updateOptions: EasyKvDataModel,
-): Promise<EasyKvUpdatType> => {
-    const kv = getKv();
-    const dataOld = (await findManyKvEntry(collection, filter))[0];
+export const findOneAndUpdate = async <T extends EKDataModel>(
+  collection: string,
+  filter: EKDataModel,
+  updateOptions: T,
+): Promise<EKUpdateType<T>> => {
+  const kv = getKv();
+  const dataOld = (await findManyKvEntry(collection, filter))[0];
 
-    if (!dataOld) throw new Error("No previos data found");
+  if (!dataOld) throw new Error("No previous data found");
 
-    const dataNew = {
-        ...dataOld,
-        ...updateOptions,
-    };
+  const dataNew: T = {
+    ...dataOld,
+    ...updateOptions,
+  };
 
-    const result = await kv.set(
-        [collection, dataNew._id as Deno.KvKeyPart],
-        dataNew,
-    );
+  const result = await kv.set(
+    [collection, dataNew._id as Deno.KvKeyPart],
+    dataNew,
+  );
 
-    return {
-        ...result,
-        dataOld,
-        dataNew,
-    };
+  return {
+    ok: result.ok,
+    versionstamp: result.versionstamp,
+    dataOld,
+    dataNew,
+  };
 };

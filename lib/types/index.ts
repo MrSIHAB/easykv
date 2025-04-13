@@ -1,27 +1,31 @@
-export type EasyKvDataModel = { [key: string]: unknown };
-export type EasyKVSaveResponse = {
-    ok: boolean;
-    versionstamp: string | null;
-    value: EasyKvDataModel;
+// export type EKDataModel = { [key: string]: unknown };
+export type EKDataModel = Record<string, any>;
+export type EKSaveResponse<T extends EKDataModel> = {
+  ok: boolean;
+  versionstamp: string | null;
+  value: T;
 };
-export type EasyKvFindById = {
-    ok: boolean;
-    versionstamp: string | null;
-    value: EasyKvDataModel;
+
+export type EKFindById<T extends EKDataModel> = {
+  ok: boolean;
+  versionstamp: string | null;
+  value: T | null;
+  message?: string;
 };
-export type EasyKvUpdatType = {
-    ok: boolean;
-    versionstamp: unknown;
-    dataOld: EasyKvDataModel;
-    dataNew: EasyKvDataModel;
+
+export type EKUpdateType<T extends EKDataModel> = {
+  ok: boolean;
+  versionstamp: string | null;
+  dataOld: EKDataModel | null;
+  dataNew: T | null;
 };
-export type EasyKvDeleteCount = {
-    allOk: boolean;
-    totalmatches: number;
-    deletedEntry: number;
-    leftEntry: number;
+export type EKDeleteCount = {
+  Ok: boolean;
+  totalMatches: number;
+  deletedEntry: number;
+  leftEntry: number;
 };
-export type EasyKvDisconnectKvType = {
-    message: string;
-    ok: boolean;
+export type EKDisconnectKvType = {
+  message: string;
+  ok: boolean;
 };

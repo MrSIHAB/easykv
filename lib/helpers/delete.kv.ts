@@ -1,5 +1,5 @@
 import { getKv } from "../database/index.ts";
-import type { EasyKvDataModel, EasyKvDeleteCount } from "../types/index.ts";
+import type { EKDataModel, EKDeleteCount } from "../types/index.ts";
 import { findManyKvEntry } from "./findManyEntry.ts";
 
 export const deleteEntry = async (
@@ -17,8 +17,8 @@ export const deleteEntry = async (
 
 export const deleteManyEntry = async (
     collection: string,
-    options: EasyKvDataModel,
-): Promise<EasyKvDeleteCount> => {
+    options: EKDataModel,
+): Promise<EKDeleteCount> => {
     const kv = getKv();
     const matchList = await findManyKvEntry(collection, options);
 
@@ -28,8 +28,8 @@ export const deleteManyEntry = async (
     const confirmDeleteation = await findManyKvEntry(collection, options);
 
     return {
-        allOk: confirmDeleteation.length !== 0 ? false : true,
-        totalmatches: matchList.length,
+        Ok: confirmDeleteation.length !== 0 ? false : true,
+        totalMatches: matchList.length,
         deletedEntry: matchList.length - confirmDeleteation.length,
         leftEntry: confirmDeleteation.length,
     };

@@ -4,7 +4,7 @@
 
 ## By MrSIHAB
 
-A lightweight and flexible library that let you use DenoKv easily.
+A lightweight and flexible library that lets you use DenoKv easily.
 
 [![Lib Version](https://img.shields.io/badge/Version-v0.2.0-0cb)](https://jsr.io/@easykv/easykv)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/MrSIHAB/EasyKV/blob/main/LICENSE)
@@ -50,8 +50,8 @@ With EasyKV, you can:
 ```js
 /*
 This is an example of EasyKv with Hono framework.
-Note: EasyKv is not dependent to any frameworks. It's directly made with Deno's core
-elements. So, it will work with any deno environment.
+Note: EasyKv is not dependent on any frameworks. It's directly made with Deno's core
+elements. So, it will work with any Deno environment.
 */
 
 import * as EasyKV from 'jsr:@easykv/easykv'
@@ -73,18 +73,17 @@ Deno.serve(app)// Listening app
 
 ## Database Structure
 
-DenoKv's multiple key system unlocks the flexibility of databse. This can follow
-multiple structure like SQL, NoSQl, TreeShape etc. This EasyKv library is highly
-inspired by mongoose. The Structure I made for this is:
+DenoKv's multiple key system unlocks the flexibility of the database. This can follow
+multiple structures like SQL, NoSQL, TreeShape, etc. Mongoose highly inspires this EasyKv library. The Structure I made for this is:
 
 - **Database**: The main database. You can specify the database location by
   `EasyVk.connect(location)` [Reference=>](#connect-database)
 - **Collection**: The collection is the main and most used class of this
-  library. Collection is a group. A group where you gonna save all similar types
-  of entries. For example: A `User` collection contains all user's data. A
-  collection works like a _**model**_ of other orms(e.g. Mongoose).
+  library. A collection is a group. A group where you're gonna save all similar types
+  of entries. For example: A `User` collection contains all users' data. A
+  collection works like a _**model**_ of other ORM (e.g., Mongoose).
   [Reference=>](#create-a-collection)
-- **Enrty**: After creating a collection, you can save data as `JSON` or
+- **Entry**: After creating a collection, you can save data as `JSON` or
   `Object{}` format. Each `object` which is being saved is called `entry`.
 - **Data**: The information an `entry` contains is called `data`.
 
@@ -358,13 +357,13 @@ try {
 ```
 
 <span style="color: #00ffd0; font-weight: bold">Definition:</span>
-`updatebyId()` fanction takes the `ID` of a entry and update the with the given
+`updatebyId()` function takes the `ID` of an entry and updates it with the given
 `updateOptions`. The function returns:
 
-- `ok`: if the process was successfull,
+- `ok`: if the process was successful,
 - `versionstamp`: VersionStamp of the data
 - `dataOld`: Existing data before update.
-- `dataNew`: The data after updateing the Previous entry.
+- `dataNew`: The data after updating the Previous entry.
 
 The function will return an `Error` if no previous data is available in
 database.
@@ -380,18 +379,18 @@ const filter = {
 const updateOptions = {
     name: "Sihab"
     friends: ["Shruti Munde"],
-    followers: ["Jhon", "Doe", "Danbo", "others"],
+    followers: ["John", "Doe", "Danbo", "others"],
 };
 
 const result = await User.findOneAndUpdate(filter, UpdteOptions);
 ```
 
 <span style="color: #00ffd0; font-weight: bold">Definition:</span> This funtion
-works similer as Previous `collection.updateById()` function. But it take an
+works similer as Previous `collection.updateById()` function. But it takes an
 `object` instead of `id`. You can pass Id as filterOption`{_id: id}`. This
-funtion filters al entry and find the atual entry to update. If multiple entry
+function filters all entries and finds the actual entry to update. If multiple entries
 match with the filter criteria, it will update the `first one`. So, make sure
-the given critera finds unique one.
+the given criteria find a unique one.
 
 ### Delete an Entry
 
@@ -435,9 +434,9 @@ const isUnique = await User.isUnique(criteria); // returns boolean(true)
 ```
 
 <span style="color: #00ffd0; font-weight: bold">Definition:</span> `IsExist()`
-ckecks if any entry exists in database with given criteria. If any entry matchs,
-it returns `true` else `false`.\
-The `isUnique()` function do just it's opposite. Internally it calls the
+Checks if any entry exists in the database with given criteria. If any entry matches,
+it returns `true`; else `false`.\
+The `isUnique()` function does just's opposite. Internally, it calls the
 `isExist()` function and returns it's opposite(`true`=>`false` || `false` =>
 `true`).
 

@@ -10,12 +10,11 @@ A lightweight and flexible library that lets you use DenoKv easily.
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/MrSIHAB/EasyKV/blob/main/LICENSE)
 [![Deno Version](https://img.shields.io/badge/Deno-2.0-white)](https://deno.com)
 
-<a href="https://www.buymeacoffee.com/mrsihab"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=mrsihab&button_colour=00DFDF&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
-
 <!-- [![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](#) -->
 
 </div>
 
+<!--
 ## Table of Contents
 
 - [Introduction](#introduction)
@@ -28,6 +27,7 @@ A lightweight and flexible library that lets you use DenoKv easily.
   - [Delete Entry](#delete-an-entry)
 - [Contributing](#contributing)
 - [License](#license)
+-->
 
 <!-- - [Features](#features) -->
 
@@ -70,6 +70,9 @@ await UserCollection.save(user); // Saving user to database
 
 Deno.serve(app)// Listening app
 ```
+
+## Activity
+![Alt](https://repobeats.axiom.co/api/embed/a8b5ad1eaae360351ce6453486be9b0bf2e86fbb.svg "Repobeats analytics image")
 
 ## Database Structure
 

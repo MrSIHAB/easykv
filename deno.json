@@ -9,6 +9,7 @@
   },
   "license": "MIT",
   "publish": {
+    "include": ["LICENSE", "mod.ts", "README.md", "deno.json", "lib/"],
     "exclude": [
       "main_test.ts",
       "**/*.test.ts",
@@ -19,8 +20,7 @@
       "*.md",
       "*.lock",
       "*.log"
-    ],
-    "include": ["LICENSE", "mod.ts", "README.md", "deno.json", "lib/"]
+    ]
   },
   "tasks": {
     "dev": "deno run --watch --allow-all --unstable-kv mod.ts",

@@ -1,51 +1,44 @@
-import {type EKDataModel, getKv} from "../../mod.ts";
-import type {EKSaveResponse} from "../types/index.ts";
+import { type EKDataModel, getKv } from "../../mod.ts";
+import type { EKSaveResponse } from "../types/index.ts";
 
+/**
+ * Saves a new entry to the specified collection.
+ * If the entry does not have an `_id`, a unique one will be generated automatically.
+ * The operation is atomic and will fail if an entry with the same `_id` already exists.
+ *
+ * @template T - The data model type.
+ * @param data - The data object to save.
+ * @param collection - The collection (namespace) name.
+ * @returns The result of the save operation, including status, versionstamp, and the entry's `_id`.
+ *
+ * @throws {Error} If an entry with the same `_id` already exists in the collection.
+ *
+ * @example
+ * ```typescript
+ * await saveData({ name: "Alice", age: 30 }, "users");
+ * ```
+ */
 export const saveData = async <T extends EKDataModel>(
   data: T,
   collection: string,
 ): Promise<EKSaveResponse<T>> => {
   const kv = getKv();
-  const givenId = await data._id as Deno.KvKeyPart;
-  /**
-   * If `_id` exist in given object, validating existing datas.
-   * So that two same id don't collaps
-   */
-  if (givenId) {
-    const existingData = await kv.get([collection, givenId]);
-    if (existingData.value) {
-      /**
-       * if data with same _id exist, Throwing an error.
-       * Package user will handle it.
-       */
-      throw new Error(
-        ` 
-                Cannot save data with this ${data._id}
-                Some data with this id: "${data._id}" already exist in database.
-                `,
-      );
-    }
+  const _id = data._id || crypto.randomUUID();
+  const key = [collection, _id];
+
+  // Atomic insert: only if key does not exist
+  const res = await kv.atomic()
+    .check({ key, versionstamp: null }) // null means key must not exist
+    .set(key, { ...data, _id })
+    .commit();
+
+  if (!res.ok) {
+    throw new Error('A collection already exists with the same "id"');
   }
-  // if _id don't collaps ........
-
-  // If _id doesn't exist, create random one */
-  const _id = givenId || crypto.randomUUID();
-
-  /**
-   * If `crypto.randomUUID()` generates an existing `UUID`, it will retry this function
-   */
-  const existingData = await kv.get([collection, _id]);
-  if (existingData.value) {
-    return saveData(data, collection);
-  }
-
-  const result = await kv.set([collection, _id], { ...data, _id });
-  //? to validate if it is success
-  const savedData = await kv.get([collection, _id]);
 
   return {
-    ok: result.ok,
-    versionstamp: result.versionstamp,
-    value: savedData.value as T,
+    ok: res.ok,
+    versionstamp: res.versionstamp,
+    id: _id,
   };
 };

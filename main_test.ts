@@ -1,89 +1,162 @@
-import {assertEquals} from "@std/assert";
-import * as EasyKv from "./mod.ts"; // Making Models
+import { assert, assertEquals, assertExists } from "jsr:@std/assert";
+import {
+  Collection,
+  connect,
+  disconnect,
+  type EKDataModel,
+  type EKDeleteCount,
+  type EKFindEntry,
+  type EKFindManyEntry,
+  type EKSaveResponse,
+  type EKUpdateType,
+  getKv,
+} from "./mod.ts";
 
-// Making Models
-interface dataModel {
-  name?: string;
-  partner?: string;
-  _id?: string | number;
+// Define a test data model
+interface User extends EKDataModel {
+  name: string;
+  age: number;
+  email?: string;
   country?: string;
-  favoriteGame?: "NEW STATE Mobile" | "PUBG";
+  _id?: string;
 }
 
-//! Connecting Global database
-const isConnected = await EasyKv.connect();
-Deno.test("Database Connected", function dbConnected() {
-  assertEquals(isConnected, true); // * If database is connected successfully
-});
-
-//! Creating collection and deleting existing data
-const Duo = new EasyKv.Collection<dataModel>("duo");
-await Duo.deleteMany({});
-
-//! Demo data model
-const testData = {
+const TEST_ID = crypto.randomUUID();
+const TEST_USER: User = {
   name: "Shoaib Hossain",
-  partner: "Shruti Munde",
-  _id: "150055",
-};
-//! Saving first entry
-const saveResponse = await Duo.save(testData);
-Deno.test("Save Data", function saveData() {
-  assertEquals(saveResponse.ok, true);
-  assertEquals(saveResponse.value, testData);
-  assertEquals(typeof saveResponse.versionstamp === "string", true);
-});
-
-//! Is exist and is unique?
-const isExist = await Duo.isExist({ partner: "Shruti Munde" });
-const isUnique = await Duo.isUnique({ name: "Shruti Munde" });
-Deno.test("IsExist and IsUnique", function isInDatabase() {
-  assertEquals(isExist, true);
-  assertEquals(isUnique, true);
-});
-
-//! Getting data by id
-const getResult = await Duo.findById("150055");
-
-Deno.test("Get single Data", function getData() {
-  assertEquals(getResult?.value, testData);
-  assertEquals(getResult?.ok, true);
-});
-
-//! Getting data by Filtering. Example shows _id. Other criterial are allowed
-const getManyResult = await Duo.findMany({ _id: "150055" });
-Deno.test("Get multiple data", function getManyData() {
-  assertEquals(getManyResult[0], testData);
-  assertEquals(getManyResult[0].partner, "Shruti Munde");
-});
-
-//! Update option for updating data
-const updateOption: dataModel = {
-  name: "Shruti Munde",
+  age: 20,
+  email: "sihab@danbo.dn",
   country: "Bangladesh",
-  favoriteGame: "NEW STATE Mobile",
+  _id: TEST_ID,
 };
-//! Updating data with options
-const updateResponse = await Duo.updateById("150055", updateOption);
-Deno.test("Update Data", function updateData() {
-  assertEquals(updateResponse.dataNew, { ...testData, ...updateOption });
-  assertEquals(updateResponse.dataOld, testData);
-  assertEquals(updateResponse.ok, true);
+
+Deno.test("Connect to database", async () => {
+  const result = await connect();
+  assert(result.ok);
+
+  const disRes = disconnect();
+  assert(disRes.ok);
 });
 
-//! Deleting all available entries
-const deleteManyResponse = await Duo.deleteMany({});
-Deno.test("Delete many data", function deleteData() {
-  assertEquals(deleteManyResponse.Ok, true);
-  assertEquals(deleteManyResponse.leftEntry, 0);
-  assertEquals(
-    deleteManyResponse.deletedEntry,
-    deleteManyResponse.totalMatches,
-  );
+Deno.test("Collection: Save new user", async () => {
+  await connect();
+  const users = new Collection<User>("users");
+  const res: EKSaveResponse<User> = await users.save(TEST_USER);
+
+  assert(res.ok);
+  assertExists(res.id);
+  assert(typeof res.versionstamp === "string" || res.versionstamp === null);
+  disconnect();
 });
 
-//! Disconnecting database connection
-const dbDisconnect = await EasyKv.disconnect();
-Deno.test("Disconnect Database", function disconnectDB() {
-  assertEquals(dbDisconnect.ok, true);
+Deno.test("Collection: Find by ID", async () => {
+  await connect();
+  const users = new Collection<User>("users");
+  const res: EKFindEntry<User> = await users.findById(TEST_ID);
+
+  assert(res.ok);
+  assertEquals(res.value?.name, "Shoaib Hossain");
+  assertEquals(res.value?.age, 20);
+  disconnect();
+});
+
+Deno.test("Collection: Find many users", async () => {
+  await connect();
+  const users = new Collection<User>("users");
+  const many: EKFindManyEntry<User>[] = await users.findMany({
+    name: "Shoaib Hossain",
+  });
+
+  assert(Array.isArray(many));
+  assert(many.some((u) => u.value._id === TEST_ID));
+  disconnect();
+});
+
+Deno.test("Collection: isExist and isUnique", async () => {
+  await connect();
+  const users = new Collection<User>("users");
+  const exists = await users.isExist({ email: "sihab@danbo.dn" });
+  const unique = await users.isUnique({ email: "shruti@danbo.dn" });
+
+  assertEquals(exists, true);
+  assertEquals(unique, true);
+  disconnect();
+});
+
+Deno.test("Collection: Update by ID", async () => {
+  await connect();
+  const users = new Collection<User>("users");
+  const update: Partial<User> = { name: "Shruti Munde", country: "IN" };
+  const res = await users.updateById(TEST_ID, update);
+  assert(res.ok);
+  // Optionally, check the updated value
+  const after = await users.findById(TEST_ID);
+  assertEquals(after.value?.name, "Shruti Munde");
+  assertEquals(after.value?.country, "IN");
+  disconnect();
+});
+
+Deno.test("Collection: findOneAndUpdate", async () => {
+  await connect();
+  const users = new Collection<User>("users");
+  const res: EKUpdateType<User> = await users.findOneAndUpdate({
+    name: "Shruti Munde",
+  }, {
+    email: "shruti@danbo.dn",
+  });
+  assert(res.ok);
+  const after = await users.findById(TEST_ID);
+  assertEquals(after.value?.email, "shruti@danbo.dn");
+  disconnect();
+});
+
+Deno.test("Collection: Delete by ID", async () => {
+  await connect();
+  const users = new Collection<User>("users");
+  const res = await users.delete(TEST_ID);
+  assert(res.ok);
+  const after = await users.findById(TEST_ID);
+  assertEquals(after.ok, false);
+  disconnect();
+});
+
+Deno.test("Collection: Save multiple and deleteMany", async () => {
+  await connect();
+  const users = new Collection<User>("users");
+  // Save multiple users
+  await users.save({ name: "Shoaib", age: 18, _id: "shoaib" });
+  await users.save({ name: "Shruti", age: 18, _id: "shruti" });
+
+  // Delete all users with age 22
+  const delRes: EKDeleteCount = await users.deleteMany({ age: 18 });
+  assert(delRes.ok);
+  assertEquals(delRes.left, 0);
+  disconnect();
+});
+
+Deno.test("Collection: Delete entire collection", async () => {
+  await connect();
+  const users = new Collection<User>("users");
+  // Save a user to ensure collection is not empty
+  await users.save({ name: "Darkness", age: 1, _id: "dn" });
+  const deleted = await users.deleteCollection({
+    wantsToRemoveEveryThingOfThisCollection: true,
+  });
+  assert(deleted);
+  const all = await users.findMany({});
+  assertEquals(all.values.length, 0);
+  disconnect();
+});
+
+Deno.test("Get database kv", async () => {
+  await connect();
+  const kv = getKv();
+  assert(kv);
+  disconnect();
+});
+
+Deno.test("Disconnect from database", async () => {
+  await connect();
+  const res = disconnect();
+  assert(res.ok);
 });

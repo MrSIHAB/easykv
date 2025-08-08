@@ -1,6 +1,6 @@
 {
   "name": "easykv",
-  "version": "0.2.1",
+  "version": "2.0.1",
   "description": "A lightweight and flexible library for working with Deno KV. Inspired by",
   "main": "mod.js",
   "directories": {

@@ -31,6 +31,8 @@ small and large-scale applications.
 - **Atomic operations**: Safe for concurrent and production use.
 - **No dependencies**: Built directly on Deno’s core.
 
+![Activity](https://repobeats.axiom.co/api/embed/a8b5ad1eaae360351ce6453486be9b0bf2e86fbb.svg "Repobeats analytics image")
+
 ---
 
 ## Table of Contents

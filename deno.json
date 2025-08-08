@@ -1,11 +1,26 @@
 {
   "name": "@easykv/easykv",
   "version": "2.0.0",
-  "exports": "./mod.ts",
+  "exports": {
+    ".": "./mod.ts",
+    "./db": "./lib/database/index.ts",
+    "./collection": "./lib/collection.ts",
+    "./types": "./lib/types/index.ts"
+  },
   "license": "MIT",
   "publish": {
-    "exclude": ["*test.*", ".*", "Documents/"],
-    "include": ["./LICENSE", "./mod.ts"]
+    "exclude": [
+      "main_test.ts",
+      "**/*.test.ts",
+      ".vscode/",
+      ".idea/",
+      ".*",
+      "Documents/",
+      "*.md",
+      "*.lock",
+      "*.log"
+    ],
+    "include": ["LICENSE", "mod.ts", "README.md", "deno.json", "lib/"]
   },
   "tasks": {
     "dev": "deno run --watch --allow-all --unstable-kv mod.ts",

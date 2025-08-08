@@ -4,445 +4,269 @@
 
 ## By MrSIHAB
 
-A lightweight and flexible library that lets you use DenoKv easily.
+Most commonly used helper functions for DenoKv. Less broiler-plate codes\
+A lightweight, type-safe, and flexible ORM for Deno KV.
 
-[![Lib Version](https://img.shields.io/badge/Version-v0.2.0-0cb)](https://jsr.io/@easykv/easykv)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/MrSIHAB/EasyKV/blob/main/LICENSE)
-[![Deno Version](https://img.shields.io/badge/Deno-2.0-white)](https://deno.com)
-
-<!-- [![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](#) -->
+[![Lib Version](https://img.shields.io/badge/EasyKV-v2.0-white)](https://jsr.io/@easykv/easykv)
+[![License](https://img.shields.io/badge/license-MIT-white)](https://github.com/MrSIHAB/EasyKV/blob/main/LICENSE)
+[![Deno Version](https://img.shields.io/badge/Deno-2.0+-white)](https://deno.com)\
+[![Scope](https://jsr.io/badges/@easykv?logoColor=white&color=white&labelColor=555)](//jsr.io/@easykv)
+[![Version](https://jsr.io/badges/@easykv/easykv?logoColor=white&color=white&labelColor=555)](//jsr.io/@easykv/easykv)
+[![Score](https://jsr.io/badges/@easykv/easykv/score?logoColor=white&color=white&labelColor=555)](//jsr.io/@easykv/easykv/score)\
+[![DenoLand](https://shield.deno.dev/x/easykv)](https://deno.land/x/easykv)
 
 </div>
 
-<!--
+---
+
+## Introduction
+
+**EasyKV** is a high-level abstraction layer for Deno's built-in KV (Key-Value)
+database.\
+It makes working with Deno KV simple, type-safe, and efficient—ideal for both
+small and large-scale applications.
+
+- **Type-safe**: Define your own models and get full TypeScript support.
+- **Familiar API**: Inspired by Mongoose and other popular ORMs.
+- **Atomic operations**: Safe for concurrent and production use.
+- **No dependencies**: Built directly on Deno’s core.
+
+---
+
 ## Table of Contents
 
-- [Introduction](#introduction)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [Database Structure](#database-structure)
 - [API Reference](#api-reference)
-  - [Saving Data](#save-some-data-to-the-database)
-  - [Querying Data](#get-data-from-the-database)
-  - [update Data](#update-data-by-id)
-  - [Delete Entry](#delete-an-entry)
-- [Contributing](#contributing)
+  - [Connect/Disconnect](#connectdisconnect)
+  - [Collections](#collections)
+  - [CRUD Operations](#crud-operations)
+  - [Advanced Queries](#advanced-queries)
+  - [Delete Collection](#delete-whole-collection)
+  - [Type Definitions](#type-definitions)
 - [License](#license)
--->
 
-<!-- - [Features](#features) -->
-
-## Intruduction
-
-EasyKV is a high-level abstraction layer for Deno's built-in KV (Key-Value)
-database. It simplifies working with Deno KV, making it easier and more
-efficient to use. Whether you're new to Deno KV or planning to use it in
-large-scale applications, EasyKV provides the tools to streamline your workflow.
-
-With EasyKV, you can:
-
-- Easily interact with Deno KV.
-- Save, update, and delete data effortlessly.
-- Query, filter, and manage data with ease.
-- Retrieve multiple records simultaneously using flexible filters.
-
-## Quick Start
-
-```js
-/*
-This is an example of EasyKv with Hono framework.
-Note: EasyKv is not dependent on any frameworks. It's directly made with Deno's core
-elements. So, it will work with any Deno environment.
-*/
-
-import * as EasyKV from 'jsr:@easykv/easykv'
-import { Hono } from 'jsr:@hono/hono'
-
-const app = new Hono(); // Initializing handler app 
-await EasyKv.connect("/db") // Connecting Database to specific path or URL
-const UserCollection = await new EasyKv.Collection("user") // Creating new user collection
-
-// Listening /user route
-app.get("/user", async (context)=> {
-const { name, age, hobby } = c.req.body; // Getting data from frontend
-const user = { _id: 1, name, age, hobby }; // making User object
-await UserCollection.save(user); // Saving user to database
-})
-
-Deno.serve(app)// Listening app
-```
-
-## Activity
-![Alt](https://repobeats.axiom.co/api/embed/a8b5ad1eaae360351ce6453486be9b0bf2e86fbb.svg "Repobeats analytics image")
-
-## Database Structure
-
-DenoKv's multiple key system unlocks the flexibility of the database. This can follow
-multiple structures like SQL, NoSQL, TreeShape, etc. Mongoose highly inspires this EasyKv library. The Structure I made for this is:
-
-- **Database**: The main database. You can specify the database location by
-  `EasyVk.connect(location)` [Reference=>](#connect-database)
-- **Collection**: The collection is the main and most used class of this
-  library. A collection is a group. A group where you're gonna save all similar types
-  of entries. For example: A `User` collection contains all users' data. A
-  collection works like a _**model**_ of other ORM (e.g., Mongoose).
-  [Reference=>](#create-a-collection)
-- **Entry**: After creating a collection, you can save data as `JSON` or
-  `Object{}` format. Each `object` which is being saved is called `entry`.
-- **Data**: The information an `entry` contains is called `data`.
-
-```bash
-Database      
-       |--- Collections
-       |    |---------- Entry
-       |    |           |------ Key: value
-       |    |           |------ Key: value
-       |    |           |------ Key: value
-       |    |           
-       |    |           
-       |    |---------- Entry
-       |                |------ Key: value
-       |                |------ Key: value
-       |                |------ Key: value
-       |                
-       |--- Collections
-       |    |---------- Entry
-       |    |           |------ Key: value
-       |    |           |------ Key: value
-       |    |           |------ Key: value
-       |    |           
-       |    |---------- Entry
-       |    |           |------ Key: value
-       |    |           |------ Key: value
-       |    |           |------ Key: value
-       |    |           
-       |    |---------- Entry
-       |                |------ Key: value
-       |                |------ Key: value
-       |                |------ Key: value
-```
+---
 
 ## Installation
 
-EasyKV is designed exclusively for Deno to simplify working with its built-in KV
-(Key-Value) database. Follow these steps to install and start using EasyKV in
-your project:
+**Deno v2.0 or higher is recommended.**
 
-#### Prerequisites
+Install via [JSR](https://jsr.io/@easykv/easykv):
 
-- Deno v2.0 or higher is recommended.
-
-### Install via Deno Official Repository
-
-Run the following command in your terminal to add EasyKv to your project:
-
-```console
-deno add easykv
-```
-
-### Install via JSR
-
-Run the following command in your terminal to add EasyKV to your project:
-
-```console
+```sh
 deno add jsr:@easykv/easykv
 ```
 
-### Import Directly
-
-Alternatively, you can directly import EasyKV into your project:
+Import via URL:
 
 ```typescript
 import * as easykv from "jsr:@easykv/easykv";
 // Or...
-import * as easykv from "https://deno.land/x/easykv";
+import * as easykv from "https://deno.land/x/easykv/mod.ts";
 ```
 
+> ⚠️ **Note:**\
+> Deno KV is currently an unstable API.\
+> **You must run your project with the `--unstable-kv` flag** or Deno KV will
+> not work and your app will fail to start.\
+> This is a requirement of Deno itself, not of EasyKV.
+>
+> **Example:**
+>
+> ```sh
+> deno run --unstable-kv main.ts
+> ```
+
+---
+
+## Quick Start
+
+```typescript
+import { Collection, connect, disconnect } from "jsr:@easykv/easykv";
+
+// Define your data model
+interface User {
+  name: string;
+  age: number;
+}
+
+// Connect to the database (optional: specify a path)
+await connect();
+
+// Create a collection instance
+const users = new Collection<User>("users");
+
+// Save a new user
+await users.save({ name: "Alice", age: 30 });
+
+// Find by ID
+const result = await users.findById("some-id");
+
+// Find many users
+const allAlices = await users.findMany({ name: "Alice" });
+
+// Update by ID
+await users.updateById("some-id", { age: 31 });
+
+// Delete by ID
+await users.delete("some-id");
+
+// Disconnect when done (optional)
+disconnect();
+```
+
+---
+
+## Database Structure
+
+EasyKV uses Deno KV’s hierarchical keys to organize your data:
+
+```
+Database
+  └── Collection (namespace)
+        └── Entry (document)
+              └── Key: value
+```
+
+- **Database**: The main Deno KV instance.
+- **Collection**: A group of related entries (like a table or model).
+- **Entry**: An individual document (object) in a collection.
+
+---
 
 ## API Reference
 
-- [Database](#connect-database)
-  - [Collection](#create-a-collection)
-    - [Save data](#save-some-data-to-the-database)
-    - [Get Data](#get-data-from-the-database)
-    - [Search or Filter Data](#search-or-filter-data)
-    - [Update Data By ID](#update-data-by-id)
-    - [Filter data and update many data](#filter-one-data-and-update-it)
-    - [Delete Entry](#delete-an-entry)
-    - [isExist & isUnique](#isexist-and-isuniqe)
-  - [Delete Collection](#delete-whole-collection)
-  - [Get all entry of a collection](#search-or-filter-data)
-- [Get Kv DataBase instance]()
-- [Connect Database]()
-- [Disconnect Database]()
-
-### Connect Database
-
-```ts
-import * as EasyKv from "@easykv/easykv";
-
-await EasyKv.connect();
-// If you have any specific remote locaion or local path,
-//you can pass that in parameter.
-```
-
-<span style="color: #00ffd0; font-weight: bold">Definition:</span> EasyKv comes
-with a `connect()` function. This allows you to connect your DenoKV database.
-Just call this function to create a local datdbase.
-
-- If you wants to connect a remote database here, you can pass the link to the
-  parameter. Ex. `connect(location)`
-- If you want to include a local path, you can also do that like this :
-  `connect("./database")`.\
-  **Note:** in that case, you have to give read and write permission. to give
-  _read_ & _write_ permission you can pass `-RW` flag while running.
-
-```bash
-deno run -RW --unstable-kv main.ts
-```
-
-### Create a Collection
+### Connect/Disconnect
 
 ```typescript
-import { Collection } from "@easykv/easykv";
+import { connect, disconnect, getKv } from "jsr:@easykv/easykv";
 
-// Create a "User" collection or model
-const UserCollection = new Collection("user");
+// Connect to the database (optional: specify a path)
+await connect("./mydb");
 
-// Example: Create another collection for products
-const Product = new Collection("product");
+// Disconnect from the database
+disconnect();
+
+// Get the raw Deno.Kv instance (advanced use)
+const kv = getKv();
 ```
 
-<span style="color: #00ffd0; font-weight: bold">Definition:</span> Deno KV
-supports hierarchical keys, and EasyKV uses the first key as the collection
-name. For instance, the string `"user"` passed in the parameter creates a
-collection called `user` in the database. This acts as the base namespace for
-all keys stored under this collection. Collections in EasyKV act like models in
-traditional ORMs (e.g., Mongoose). They group related data under a common
-namespace, enabling you to manage users, products, or other entities in an
-organized way.
-
-### Save Some Data to the Database
+### Collections
 
 ```typescript
-const data = {
-    name: "MrSIHAB",
-    age: 19,
-    country: "Bangladesh",
-};
+import { Collection } from "jsr:@easykv/easykv";
 
-// Save the data to the "user" collection
-const result = await UserCollection.save(data);
+// Define a model
+interface Product {
+  name: string;
+  price: number;
+}
 
-// Log the result
-console.log(result.ok); // Boolean indicating if the save was successful
-console.log(result.versionstamp); // The version stamp for the saved data
-console.log(result.data); // The saved data from the database
+// Create a collection
+const products = new Collection<Product>("products");
 ```
 
-<span style="color: #00ffd0; font-weight: bold">Definition:</span> The `save()`
-function accepts a data object (e.g., `{}`) to store in the collection. Here, we
-created a `data` object and used `collection.save(data)` to save it. This
-function returns a `Promise<object>`, which resolves to an object containing
-three properties:
+### CRUD Operations
 
-- `ok`: A boolean value indicating whether the save operation was successful.
-- `versionstamp`: A unique identifier (timestamp) for the saved version of the
-  data.
-- `data`: The saved data from the database, which will be returned if the save
-  was successful.
-
-You can also pass a custom `_id` to the data. If you don't provide an `_id`,
-EasyKV will automatically generate one. Be cautious when providing a custom
-`_id`, as it must be unique. Attempting to save data with a duplicate `_id` will
-result in an error.
-
-You can provide custom `_id` like this way:
+#### Save Data
 
 ```typescript
-const dataWithId = {
-    _id: "custom-id-1234", // Custom _id
-    name: "MrSIHAB",
-    age: 19,
-    country: "Bangladesh",
-    dn: "Dark-Ness",
-};
-
-await User.save(dataWithId);
+const result = await products.save({ name: "Book", price: 10 });
+console.log(result.ok, result.id, result.versionstamp);
 ```
 
-### Get Data from the Database
+#### Find by ID
 
 ```typescript
-const User = new Collection("user");
-
-// Retrieve data by using the findById function
-const data = await User.findById(id);
-
-// If you pass the _id, it will return the corresponding data
-console.log(data.name); // Access the name property
-console.log(data.age); // Access the age property
-console.log(data.country); // Access the country property
-console.log(data.dn); // Access the dn property
-```
-
-<span style="color: #00ffd0; font-weight: bold">Definition:</span> The
-`findById()` function allows you to retrieve data by passing the unique `_id`.
-The `_id` acts as the identifier for the specific entry in the collection. By
-calling `collection.findById(_id)`, it returns the data associated with that
-`_id`. If no data is found for the given `_id`, it will return `null` or an
-empty response. To handle null response, you can use `ifelse` :
-
-```typescript
-if (data) {
-    console.log(data.name);
-} else {
-    console.log("No data found for this ID.");
+const found = await products.findById("some-id");
+if (found.ok) {
+  console.log(found.value);
 }
 ```
 
-### Search or Filter Data
+#### Find Many
 
 ```typescript
-// Import the User collection that we created
-import { User } from "./path/user.ts"; // Collection
-
-// Define the filter object
-const filter = {
-    name: "Shruti Munde",
-    age: 20,
-};
-
-// Use findMany to search/filter data based on the criteria
-const filteredData: [] = await User.findMany(filter);
-// Note: findMany will return an array of matching data objects
-
-// Handling a case where no data matches
-if (filteredData.length === 0) {
-    console.log("No users found matching the filter.");
-} else {
-    console.log(filteredData[0]); // Display the first match, for example
-}
-
-// As filterData is an array, ensure the index is a number
+const books = await products.findMany({ name: "Book" });
+const all = await products.findMany({});
 ```
 
-<span style="color: #00ffd0; font-weight: bold">Definition:</span> The
-collection.findMany({options}) function allows you to retrieve an array of data
-that matches the provided filter criteria. If you pass an empty object {}, it
-will return all available data in the collection.
+#### Update by ID
 
-For example, to retrieve all data:
-
-```ts
-const allData = await collection.findMany({});
+```typescript
+const updateResult = await products.updateById("some-id", { price: 12 });
+console.log(updateResult.ok, updateResult.versionstamp);
 ```
 
-### Update data by ID
+#### Find One and Update
 
-```ts
-// Existing data to update
-const userId = "0055"; // Assume this ID exists in the database
-const updateOptions = {
-    name: "SIHAB",
-    age: 20, // Updated age
-};
-
-try {
-    const result = await User.updateById(userId, updateOptions);
-
-    console.log("Update successful:", result.ok);
-    console.log("Versionstamp:", result.versionstamp);
-    console.log("Updated data:", result.dataNew);
-    console.log("Updated data:", result.dataOld);
-} catch (error) {
-    console.error("Error updating data:", error.message);
-}
-```
-
-<span style="color: #00ffd0; font-weight: bold">Definition:</span>
-`updatebyId()` function takes the `ID` of an entry and updates it with the given
-`updateOptions`. The function returns:
-
-- `ok`: if the process was successful,
-- `versionstamp`: VersionStamp of the data
-- `dataOld`: Existing data before update.
-- `dataNew`: The data after updating the Previous entry.
-
-The function will return an `Error` if no previous data is available in
-database.
-
-### Filter One Data and Update it.
-
-```ts
-const filter = {
-    name: "Shoaib Hossain",
-    email: "MrSIHAB@hotmail.com",
-};
-
-const updateOptions = {
-    name: "Sihab"
-    friends: ["Shruti Munde"],
-    followers: ["John", "Doe", "Danbo", "others"],
-};
-
-const result = await User.findOneAndUpdate(filter, UpdteOptions);
-```
-
-<span style="color: #00ffd0; font-weight: bold">Definition:</span> This funtion
-works similer as Previous `collection.updateById()` function. But it takes an
-`object` instead of `id`. You can pass Id as filterOption`{_id: id}`. This
-function filters all entries and finds the actual entry to update. If multiple entries
-match with the filter criteria, it will update the `first one`. So, make sure
-the given criteria find a unique one.
-
-### Delete an Entry
-
-```ts
-const result = await User.delete(id); // returns a boolean value
-
-if (result) {
-    console.log("User Was removed successfully");
-}
-```
-
-<span style="color: #00ffd0; font-weight: bold">Definition:</span>
-`Collection.delete()` function requires the `id` of an entry to remove it
-completely.
-
-### Delete whole collection
-
-```ts
-const isDeleted = await User.deletCollection({
-    wantsToRemoveEveryThingOfThisCollection: true, // Just for reduce accidents
+```typescript
+const updateResult = await products.findOneAndUpdate({ name: "Book" }, {
+  price: 15,
 });
-if (isDeleted) {
-    console.log("All the information of this collection was deleted!!!");
+```
+
+#### Delete by ID
+
+```typescript
+const delResult = await products.delete("some-id");
+console.log(delResult.ok);
+```
+
+#### Delete Many
+
+```typescript
+const stats = await products.deleteMany({ price: 10 });
+console.log(stats.deletedEntry, stats.leftEntry);
+```
+
+---
+
+### Advanced Queries
+
+#### Check Existence and Uniqueness
+
+```typescript
+const exists = await products.isExist({ name: "Book" });
+const isUnique = await products.isUnique({ name: "Book" });
+```
+
+---
+
+### Delete Whole Collection
+
+```typescript
+const deleted = await products.deleteCollection({
+  wantsToRemoveEveryThingOfThisCollection: true,
+});
+if (deleted) {
+  console.log("Collection deleted!");
 }
 ```
 
-<span style="color: #00ffd0; font-weight: bold">Definition:</span> Internally it
-uses deleteMany function to delete every entry.
-`wantsToRemoveEveryThingOfThisCollection` was included to reduce accidents.
+---
 
-### IsExist and IsUniqe
+### Type Definitions
 
-```ts
-const criteria = {
-    name: "Shaoib Hossain",
-    age: 105,
-};
+EasyKV provides types for advanced use and type-safety:
 
-const isExist = await User.isExist(criteria); // returns boolean(false)
-const isUnique = await User.isUnique(criteria); // returns boolean(true)
-```
+- `EKDataModel`: Base type for all models.
+- `EKSaveResponse<T>`: Result of a save operation.
+- `EKFindById<T>`: Result of a find-by-ID operation.
+- `EKUpdateType<T>`: Result of an update operation.
+- `EKDeleteCount`: Result of a delete-many operation.
+- `EKDisconnectKvType`: Result of a disconnect operation.
 
-<span style="color: #00ffd0; font-weight: bold">Definition:</span> `IsExist()`
-Checks if any entry exists in the database with given criteria. If any entry matches,
-it returns `true`; else `false`.\
-The `isUnique()` function does just's opposite. Internally, it calls the
-`isExist()` function and returns it's opposite(`true`=>`false` || `false` =>
-`true`).
+---
 
 ## License
 
-This project(**EasyKv**) is licensed under the [MIT License](LICENSE).
+This project (**EasyKV**) is licensed under the [MIT License](LICENSE).
+
+---
+
+<div align="center">
+  <sub>Made with ❤️ by MrSIHAB</sub>
+</div>

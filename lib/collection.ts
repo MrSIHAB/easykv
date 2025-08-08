@@ -1,60 +1,84 @@
-import {getKv} from "../mod.ts";
-import {CollectionMap} from "./collection.abstract.ts";
-import {deleteEntry, deleteManyEntry} from "./helpers/delete.kv.ts";
-import {findManyKvEntry} from "./helpers/findManyEntry.ts";
-import {saveData} from "./helpers/saveData.ts";
-import {findOneAndUpdate, updateByIdHelper} from "./helpers/updateData.ts";
-import type {EKDataModel, EKDeleteCount, EKFindById, EKSaveResponse, EKUpdateType,} from "./types/index.ts";
+import { getKv } from "../mod.ts";
+import { CollectionMap } from "./collection.abstract.ts";
+import { deleteEntry, deleteManyEntry } from "./helpers/delete.kv.ts";
+import { findManyKvEntry } from "./helpers/findManyEntry.ts";
+import { saveData } from "./helpers/saveData.ts";
+import { findOneAndUpdate, updateByIdHelper } from "./helpers/updateData.ts";
+import type {
+  EKDataModel,
+  EKDeleteCount,
+  EKFindEntry,
+  EKFindManyEntry,
+  EKSaveResponse,
+  EKUpdateType,
+} from "./types/index.ts";
 
 /////////////////////////////////////////////////////
-//////////       Collection Class        ////////////
-/////////////////////////////////////////////////////
-
 /**
- * Example:
+ * The `Collection` class provides a high-level API for managing entities in a Deno KV database.
+ * Each collection acts as a namespace for a group of related documents (like a table in SQL or a collection in MongoDB).
  *
+ * #### Features
+ * - Save, find, update, and delete documents by ID or filter.
+ * - Check for existence or uniqueness of data.
+ * - Batch delete and full collection wipe.
+ * - All operations are promise-based and type-safe.
+ *
+ * #### Example Usage
  * ```typescript
- * const collectionName = new Collection("collection-name")
+ * import { Collection } from "easykv";
+ *
+ * // Define your data model
+ * interface User extends EKDataModel {
+ *   name: string;
+ *   age: number;
+ * }
+ *
+ * // Create a collection instance
+ * const users = new Collection<User>("users");
+ *
+ * // Save a new user
+ * await users.save({ name: "Shoaib Hossain", age: 19 });
+ *
+ * // Find by ID
+ * const result = await users.findById("<SOME-ID>");
+ *
+ * // Find many
+ * const allShrutis = await users.findMany({ name: "Shruti" });
+ *
+ * // Update by ID
+ * await users.updateById("<SOME-ID>", { age: 21 });
+ *
+ * // Delete by ID
+ * await users.delete("<SOME-ID>");
  * ```
  *
- * Deno KV
- * supports hierarchical keys, and EasyKV uses the first key as the collection
- * name. For instance, the string `"user"` passed in the parameter creates a
- * collection called `user` in the database. This acts as the base namespace for
- * all keys stored under this collection. Collections in EasyKV act like EasyKvDataModels in
- * traditional ORMs (e.g., Mongoose). They group related data under a common
- * namespace, enabling you to manage users, products, or other entities in an
- * organized way.
+ * @typeParam T - The data model type for this collection.
  */
-export class Collection<T extends EKDataModel = EKDataModel>
-  extends CollectionMap<T> {
+/////////////////////////////////////////////////////
+export class Collection<
+  T extends EKDataModel = EKDataModel,
+> extends CollectionMap<T> {
+  /**
+   * Create a new Collection instance.
+   * @param collection - The name of the collection (namespace).
+   */
   constructor(collection: string) {
     super(collection);
     this.collection = collection;
   }
 
   /////////////////////////////////////////////////////
-  //////////     Save Data To Database     ////////////
-  /////////////////////////////////////////////////////
-
   /**
-   * * ###  Save Method
+   * Save a new document to the collection.
+   * If `_id` is not provided, a unique one will be generated automatically.
    *
-   * This function saves data(object) to denoKv database.
-   * one example :
+   * @param data - The data object to save.
+   * @returns The result of the save operation, including status and versionstamp.
+   *
+   * @example
    * ```typescript
-   *  collection.save({key: "value", key2: "value2"})
-   * ```
-   * To specify uniqueness of every entry, You can include a `_id` key to the given object.
-   * If you don't, `easyKv` will automatically create a unique `_id`.
-   * @param data
-   * @returns What does it return?
-   * ```typescript
-   * returns {
-   *  ok: boolean,
-   *  versionstamp: string
-   *  value
-   * }
+   * await users.save({ name: "Shruti", age: 18 });
    * ```
    */
   override save = async (
@@ -62,229 +86,178 @@ export class Collection<T extends EKDataModel = EKDataModel>
   ): Promise<EKSaveResponse<T>> => await saveData<T>(data, this.collection);
 
   /////////////////////////////////////////////////////
-  //////////       Find Data By ID        /////////////
-  /////////////////////////////////////////////////////
-
   /**
-   * *  ###   Find an entry by its `_id`
+   * Find a document by its unique `_id`.
    *
-   * Function takes the `id` of an entry and returns that `entry` with confirmation option `ok` \
-   * For example:
-   * ```ts
-   * const result = await User.findById("150055")
-   * const entry = result.value
+   * @param id - The unique identifier of the document.
+   * @returns An object containing the document (if found), versionstamp, and status.
    *
-   * result.value // the entry if found
-   * result.ok // whether operation was successful or not.
-   * result.versionstamp // To manage data // auto maintained
+   * @example
+   * ```typescript
+   * const result = await users.findById("<USER-ID>");
+   * if (result.ok) {
+   *   console.log(result.value);
+   * }
    * ```
-   *
-   * @param id Unique `_id`
-   * @returns {ok, versionstamp, value: "You'r queried data"}
    */
   override async findById(
     id: Deno.KvKeyPart,
-  ): Promise<EKFindById<T>> {
+  ): Promise<EKFindEntry<T>> {
     try {
       const kv = getKv();
-      const { value, versionstamp } = await kv.get([this.collection, id]);
+      const { value, versionstamp } = await kv.get<T>([this.collection, id]);
       const ok = !!value;
-      return { value: value as T, versionstamp, ok };
-    } catch (e) {
+      return { value, versionstamp, ok };
+    } catch (_) {
       return {
         value: null,
         versionstamp: null,
         ok: false,
-        message: e?.toString() ?? "something went wrong",
       };
     }
   }
 
   /////////////////////////////////////////////////////
-  /////    Get Many Data By Filtering Option     //////
-  /////////////////////////////////////////////////////
-
   /**
-   * * ### Find multiple options by Filtering it
+   * Find multiple documents matching the given filter.
+   * Pass an empty object to retrieve all documents in the collection.
    *
-   * Get a list of filtered data. Pass some `options` to this function and it will filter all matched data
+   * @param filter - Key-value pairs to match.
+   * @returns An array of matching documents.
    *
-   * Leave a empty object `{}` to get all data of this collection.
-   * An example is:
+   * @example
    * ```typescript
-   *  collection.findMan({name: "Shruti Munde"}) :
-   * ```
-   * @param filter Record<string, any>
-   * @returns Record<string, any>
-   */
-  findMany = async (
-    filter: EKDataModel,
-  ): Promise<T[]> => await findManyKvEntry<T>(this.collection, filter);
-
-  ////////////////////////////////////////////////////////////////
-  //////////       Is The Data or Filter Exist        ////////////
-  ////////////////////////////////////////////////////////////////
-
-  /**
-   * * ###    Is same data exist?
-   * You can pass any criteria in this function's patameter. It will
-   * check if any data exist with same criteria or not.
-   * Returns true when any data exist. Else false.
-   * For Ex:
-   * ```ts
-   * const criteria = {
-   *  name: "Shruti Munde",
-   *  age: 17,
-   * }
+   * const teens = await users.findMany({ name: "Shoaib Hossain" });
+   * const everyone = await users.findMany({});
    *
-   * const isExist = await User.isExist(criteria)
-   * if(isExist){
-   *  console.log("User eixst with this criteria.")
-   * }
+   * console.log(everyone[0].value)
    * ```
-   * @param options \{key, value}
-   * @returns Promise\<boolean>
    */
-  override async isExist(options: EKDataModel): Promise<boolean> {
+  findMany = (filter: Partial<T>): Promise<EKFindManyEntry<T>[]> =>
+    findManyKvEntry<T>(this.collection, filter);
+
+  ////////////////////////////////////////////////////////////////
+  /**
+   * Check if any document exists matching the given criteria.
+   *
+   * @param options - Key-value pairs to match.
+   * @returns `true` if at least one document exists, otherwise `false`.
+   *
+   * @example
+   * ```typescript
+   * const exists = await users.isExist({ name: "SIHAB" });
+   * ```
+   */
+  override async isExist(options: Partial<T>): Promise<boolean> {
     const data = await findManyKvEntry(this.collection, options);
-    return data.length != 0;
+    return data.length !== 0;
   }
 
   //////////////////////////////////////////////////////////////////
-  //////////       Is The data or filter Unique?        ////////////
-  //////////////////////////////////////////////////////////////////
-
   /**
-   * * ###    Is same data exist?
-   * You can pass any criteria in this function's parameter. It will
-   * check if given data is unique.
-   * Returns true when any no data exist and Proved to be unique. Else false.
-   * For Ex:
-   * ```ts
-   * const criteria = {
-   *  name: "Shoaib Hossain",
-   *  age: 18,
-   * }
+   * Check if the given criteria is unique (no document exists with the same data).
    *
-   * const isUnique = await User.isUnique(criteria)
-   * if(!isUnique){
-   *  console.log("A data already existed with same criteria.")
-   * }
-   * ```
-   * @returns Promise\<boolean>
-   * @param option
-   */
-  override isUnique = async (option: EKDataModel): Promise<boolean> =>
-    !(await this.isExist(option)); //!  Returning the opposite of isExist()
-
-  /////////////////////////////////////////////////
-  //////////       Update By Id        ////////////
-  /////////////////////////////////////////////////
-
-  /**
-   * * ### Update data with it's id
-   * Example:
+   * @param option - Key-value pairs to check for uniqueness.
+   * @returns `true` if no document exists, otherwise `false`.
+   *
+   * @example
    * ```typescript
-   * const updateOptions = {
-   *  name: "SIHAB", // Previously "Shoaib Hossain"
-   *  dn: "Danbo" // Previously something else
-   * }
-   *
-   * const result = await collection.updateById(id, updateOptions)
-   * const oldData = result.dataOld
-   * const newData = result.dataNew
+   * const isUnique = await users.isUnique({ email: "shruti@danbo.dn" });
    * ```
+   */
+  override isUnique = async (option: Partial<T>): Promise<boolean> =>
+    !(await this.isExist(option));
+
+  /////////////////////////////////////////////////
+  /**
+   * Update a document by its `_id` with the provided data.
    *
-   * @param id : The unique identifier `_id`
-   * @param options : The data you wants to update
-   * @returns `ok`, `versionstamp`, `updatedData`
+   * @param id - The unique identifier of the document.
+   * @param options - The data to update.
+   * @returns The result of the update operation, including old and new data.
+   *
+   * @example
+   * ```typescript
+   * await users.updateById("<USER-ID>", { region: "Bangladesh" });
+   * ```
    */
   override updateById = async (
     id: Deno.KvKeyPart,
-    options: EKDataModel,
+    options: Partial<T>,
   ): Promise<EKUpdateType<T>> =>
     await updateByIdHelper<T>(this.collection, id, options);
 
   ////////////////////////////////////////////////////////////////
-  //////////       Filter a data and Update it        ////////////
-  ////////////////////////////////////////////////////////////////
-
   /**
-   * * ### Find by filter and Update
+   * Find the first document matching the filter and update it with the given data.
+   * If multiple documents match, only the first is updated.
    *
-   * example:
-   * ```ts
-   * const result = await collection.findOneAndUpdate(filter, updateOptions)
+   * @param filter - Key-value pairs to match.
+   * @param updateOptions - Data to update in the matched document.
+   * @returns The result of the update operation, including old and new data.
    *
-   * const { ok, versionstamp, dataOld, dataNew } = result;
-   *
-   * console.log(ok)
-   * console.log(versionstamp)
-   * console.log(dataOld)
-   * console.log(dataNew)
+   * @example
+   * ```typescript
+   * await users.findOneAndUpdate({ name: "MrSIHAB" }, { age: 20 });
    * ```
-   * This function helps to find a specific entry and update it with given options
-   * If multiple entries found, it will update the first entry.
-   *
-   * @param filter {key: value}
-   * @param updateOptions {key: updatedValue}
-   * @returns {ok, versionstamp, dataOld, dataNew}
    */
-  override findOneAndUpdate = async (
-    filter: EKDataModel,
-    updateOptions: T,
+  override findOneAndUpdate = (
+    filter: Partial<T>,
+    updateOptions: Partial<T>,
   ): Promise<EKUpdateType<T>> =>
-    await findOneAndUpdate(this.collection, filter, updateOptions);
+    findOneAndUpdate(this.collection, filter, updateOptions);
 
   /////////////////////////////////////////////////////
-  //////////         Delete a data         ////////////
-  /////////////////////////////////////////////////////
-
   /**
-   * * ### Delete a entry by it's id.
-   * example:
-   * ```ts
-   * const result = await collection.delete(id)
+   * Delete a document by its `_id`.
+   *
+   * @param id - The unique identifier of the document.
+   * @returns An object indicating if the deletion was successful.
+   *
+   * @example
+   * ```typescript
+   * await users.delete("<USER-ID>");
    * ```
-   * @param id
-   * @returns boolean(true, false)
    */
-  override delete = async (id: Deno.KvKeyPart): Promise<boolean> =>
+  override delete = async (id: Deno.KvKeyPart): Promise<{ ok: boolean }> =>
     await deleteEntry(this.collection, id);
 
   ////////////////////////////////////////////////////////////////
-  //////////       Filter And Delete many Data        ////////////
-  ////////////////////////////////////////////////////////////////
-
   /**
-   * * ### Find the matched entries by the given options and delete them.
-   * example:
-   * ```ts
-   * const matches = {
-   *  name: "Shoaib Hossain",
-   *  age: "20",
-   * }
+   * Delete all documents matching the given filter.
    *
-   * const result = await collection.deleteMany(options)
+   * @param options - Key-value pairs to match for deletion.
+   * @returns An object with deletion statistics.
+   *
+   * @example
+   * ```typescript
+   * await users.deleteMany({ name: "Shruti" });
    * ```
-   *
-   * @param options \{key: value} // matches
-   * @returns \{allOk, totalmatches, deleteEntry, leftEntry}
    */
   override deleteMany = async (
-    options: EKDataModel,
-  ): Promise<EKDeleteCount> => await deleteManyEntry(this.collection, options);
+    options: Partial<T>,
+  ): Promise<EKDeleteCount> =>
+    await deleteManyEntry<T>(this.collection, options);
 
   ///////////////////////////////////////////////////////////
-  //////////       Delete full Collection        ////////////
-  ///////////////////////////////////////////////////////////
-
+  /**
+   * Delete all documents in the collection.
+   * Requires explicit confirmation to prevent accidental data loss.
+   *
+   * @param confirmation - Object with `wantsToRemoveEveryThingOfThisCollection: true` to confirm.
+   * @returns `true` if the collection was deleted, otherwise `false`.
+   *
+   * @example
+   * ```typescript
+   * await users.deleteCollection({ wantsToRemoveEveryThingOfThisCollection: true });
+   * ```
+   */
   override deleteCollection = async (
-    confirmation: { wantsToRemoveEveryThingOfThisCollection: boolean },
+    confirmation: { wantsToRemoveEveryThingOfThisCollection?: boolean },
   ): Promise<boolean> => {
     if (!confirmation.wantsToRemoveEveryThingOfThisCollection) {
       return false;
     }
-    return (await deleteManyEntry(this.collection, {})).Ok;
+    return (await deleteManyEntry(this.collection, {})).ok;
   };
 }

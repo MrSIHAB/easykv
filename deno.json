@@ -1,8 +1,12 @@
 {
   "name": "@easykv/easykv",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "exports": "./mod.ts",
   "license": "MIT",
+  "publish": {
+    "exclude": ["*test.*", ".*", "Documents/"],
+    "include": ["./LICENSE", "./mod.ts"]
+  },
   "tasks": {
     "dev": "deno run --watch --allow-all --unstable-kv mod.ts",
     "test": "deno test --allow-all --unstable-kv main_test.ts"
